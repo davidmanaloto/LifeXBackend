@@ -2,7 +2,6 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.shortcuts import redirect
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
@@ -10,25 +9,18 @@ from drf_spectacular.views import (
 )
 from . import views
 
-# Redirect root to login
-def redirect_to_login(request):
-    return redirect('/login/')
-
 urlpatterns = [
-    # Root redirects to login
-    path('', redirect_to_login, name='home'),
+    # Landing page as root
+    path('', views.landing_page, name='home'),
     
-    # Django Admin (default)
+    # Django Admin
     path('admin/', admin.site.urls),
     
     # Web Interfaces
     path('login/', views.login_view, name='login'),
-    path('staff/', views.it_staff_dashboard, name='it_staff_dashboard'),
+    path('staff/', views.staff_dashboard, name='staff_dashboard'),
     path('patient/', views.patient_portal, name='patient_portal'),
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
-    
-    # Optional: Blockchain explorer (if you added it)
-    # path('explorer/', views.blockchain_explorer, name='blockchain_explorer'),
     
     # API endpoints
     path('api/auth/', include('users.urls')),

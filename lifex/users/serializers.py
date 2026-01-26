@@ -2,6 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 
+from .models import Department, DoctorSchedule, ScheduleException, Appointment, Notification
+
 User = get_user_model()
 
 
@@ -37,10 +39,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return attrs
     
     def validate_role(self, value):
-        """Validate role - users can't register as ADMIN or IT_STAFF"""
-        if value and value in ['ADMIN', 'IT_STAFF']:
+        """Validate role - users can only self-register as PATIENT"""
+        # Only PATIENT role is allowed for self-registration
+        # Staff roles (ADMIN, RECEPTIONIST, NURSE, DOCTOR) must be created by admin
+        if value and value in ['ADMIN', 'RECEPTIONIST', 'NURSE', 'DOCTOR']:
             raise serializers.ValidationError(
-                "You cannot register with ADMIN or IT_STAFF role."
+                "You can only register as a PATIENT. Staff accounts must be created by an administrator."
             )
         return value
     
@@ -49,13 +53,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         validated_data.pop('password2')
         password = validated_data.pop('password')
         
-        # Ensure regular users get PATIENT role and PENDING status
+        # Ensure regular users get PATIENT role
         if 'role' not in validated_data:
             validated_data['role'] = 'PATIENT'
-        
-        # Set account_status to PENDING for patients (requires approval)
-        if validated_data.get('role') == 'PATIENT':
-            validated_data['account_status'] = 'PENDING'
         
         user = User.objects.create_user(
             password=password,
@@ -83,7 +83,8 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'email', 'first_name', 'last_name', 'full_name',
-            'role', 'account_status', 'kyc_status', 'is_active',
+            'role', 'is_active',
+            'department', 'employee_id', 'license_number', 'specialization',
             'date_of_birth', 'age', 'gender', 'phone_number',
             'address_line1', 'address_line2', 'city', 'state_province',
             'postal_code', 'country',
@@ -92,15 +93,14 @@ class UserSerializer(serializers.ModelSerializer):
             'date_joined', 'last_login'
         )
         read_only_fields = (
-            'id', 'role', 'account_status', 'kyc_status', 
-            'is_active', 'date_joined', 'last_login'
+            'id', 'role', 'is_active', 'date_joined', 'last_login'
         )
     
     def get_full_name(self, obj):
         return obj.get_full_name()
     
     def get_age(self, obj):
-        return obj.get_age()
+        return obj.age
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -168,14 +168,12 @@ class UserAdminSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'email', 'first_name', 'last_name', 'full_name',
-            'role', 'account_status', 'kyc_status', 
-            'is_active', 'is_staff', 'is_superuser',
+            'role', 'is_active', 'is_staff', 'is_superuser',
             'date_of_birth', 'age', 'gender', 'phone_number',
             'address_line1', 'address_line2', 'city', 'state_province',
             'postal_code', 'country',
             'emergency_contact_name', 'emergency_contact_phone', 
             'emergency_contact_relationship',
-            'temporary_id',
             'date_joined', 'last_login'
         )
         read_only_fields = ('id', 'date_joined', 'last_login')
@@ -184,21 +182,63 @@ class UserAdminSerializer(serializers.ModelSerializer):
         return obj.get_full_name()
     
     def get_age(self, obj):
-        return obj.get_age()
+        return obj.age
 
 
-class AccountStatusUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating account status (Admin only)"""
+
+
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    """Serializer for Hospital Departments"""
+    staff_count = serializers.IntegerField(source='staff_members.count', read_only=True)
     
     class Meta:
-        model = User
-        fields = ('account_status',)
+        model = Department
+        fields = ('id', 'name', 'code', 'description', 'is_active', 'staff_count')
+
+
+class DoctorScheduleSerializer(serializers.ModelSerializer):
+    """Serializer for Doctor Schedules"""
+    doctor_name = serializers.CharField(source='doctor.get_full_name', read_only=True)
+    day_name = serializers.CharField(source='get_day_of_week_display', read_only=True)
     
-    def validate_account_status(self, value):
-        """Validate account status"""
-        valid_statuses = ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']
-        if value not in valid_statuses:
-            raise serializers.ValidationError(
-                f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
-            )
-        return value
+    class Meta:
+        model = DoctorSchedule
+        fields = (
+            'id', 'doctor', 'doctor_name', 'day_of_week', 'day_name',
+            'start_time', 'end_time', 'slot_duration_minutes',
+            'max_patients_per_slot', 'is_active'
+        )
+
+
+class AppointmentSerializer(serializers.ModelSerializer):
+    """Serializer for Appointments"""
+    patient_name = serializers.CharField(source='patient.get_full_name', read_only=True)
+    doctor_name = serializers.CharField(source='doctor.get_full_name', read_only=True)
+    booked_by_name = serializers.CharField(source='booked_by.get_full_name', read_only=True, default='')
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = Appointment
+        fields = (
+            'id', 'patient', 'patient_name', 'doctor', 'doctor_name',
+            'booked_by', 'booked_by_name',
+            'appointment_date', 'appointment_time',
+            'appointment_type', 'status', 'status_display',
+            'reason', 'created_at', 'checked_in_at', 'completed_at'
+        )
+        read_only_fields = ('booked_by', 'created_at', 'checked_in_at', 'completed_at')
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    """Serializer for Notifications"""
+    type_display = serializers.CharField(source='get_notification_type_display', read_only=True)
+    
+    class Meta:
+        model = Notification
+        fields = (
+            'id', 'recipient', 'notification_type', 'type_display',
+            'priority', 'title', 'message', 'related_appointment',
+            'is_read', 'created_at'
+        )
+        read_only_fields = ('recipient', 'created_at')

@@ -6,61 +6,91 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.db.models import Q
 
-from .models import MedicalRecord, BlockchainTransaction
+from .models import MedicalRecord, BlockchainTransaction, AuditLog
 from .medical_serializers import (
     PatientRegistrationSerializer,
     PatientListSerializer,
     MedicalRecordUploadSerializer,
     MedicalRecordSerializer,
-    PatientApprovalSerializer
+    AuditLogSerializer
 )
-from .permissions import IsITStaff, IsPatient, IsAdmin
+from .permissions import (
+    IsNurse, 
+    IsPatient, 
+    IsAdmin, 
+    IsReceptionist, 
+    IsMedicalStaff,
+    CanViewRecords, 
+    CanRegisterPatients,
+    CanUploadRecords
+)
 from .blockchain_service import BlockchainService
 from .utils import generate_document_id, hash_file
+
+
+def log_action(user, action, resource_type='', resource_id='', details='', request=None):
+    """Helper to create audit log"""
+    ip_address = '0.0.0.0'
+    if request:
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip_address = x_forwarded_for.split(',')[0]
+        else:
+            ip_address = request.META.get('REMOTE_ADDR')
+            
+    AuditLog.objects.create(
+        user=user,
+        action=action,
+        resource_type=resource_type,
+        resource_id=str(resource_id),
+        details=details,
+        ip_address=ip_address
+    )
+
 
 User = get_user_model()
 
 
-# ==================== IT STAFF VIEWS ====================
+# ==================== STAFF VIEWS ====================
 
-class RegisterPatientView(APIView):
-    """IT Staff can register new patients"""
-    permission_classes = [IsITStaff]
+class PatientRegistrationView(generics.CreateAPIView):
+    """Staff can register new patients"""
+    permission_classes = [CanRegisterPatients]
+    serializer_class = PatientRegistrationSerializer
     
-    def post(self, request):
-        serializer = PatientRegistrationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        patient = serializer.save()
-        
-        return Response({
-            'message': 'Patient registered successfully. Pending admin approval.',
-            'patient': PatientListSerializer(patient).data
-        }, status=status.HTTP_201_CREATED)
+    def perform_create(self, serializer):
+        user = serializer.save()
+        log_action(
+            user=self.request.user, 
+            action='REGISTER_PATIENT', 
+            resource_type='USER', 
+            resource_id=user.id, 
+            details=f"Registered patient {user.email}",
+            request=self.request
+        )
 
 
-class ListPatientsView(generics.ListAPIView):
-    """IT Staff can view all patients"""
-    permission_classes = [IsITStaff]
+class PatientListView(generics.ListAPIView):
+    """Staff view all patients"""
+    permission_classes = [IsAuthenticated]
     serializer_class = PatientListSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['email', 'first_name', 'last_name']
-    ordering_fields = ['date_joined', 'email']
+    ordering_fields = ['first_name', 'last_name', 'date_joined']
     
     def get_queryset(self):
-        queryset = User.objects.filter(role='PATIENT')
-        
-        # Filter by status if provided
-        status_filter = self.request.query_params.get('status', None)
-        if status_filter:
-            queryset = queryset.filter(account_status=status_filter)
-        
-        return queryset
+        # Only medical staff/admin can see patients
+        if self.request.user.role not in ['ADMIN', 'RECEPTIONIST', 'NURSE', 'DOCTOR']:
+            return User.objects.none()
+            
+        return User.objects.filter(role='PATIENT').order_by('-date_joined')
 
+
+# ==================== NURSE VIEWS ====================
 
 class UploadMedicalRecordView(APIView):
-    """IT Staff uploads medical records for patients"""
-    permission_classes = [IsITStaff]
+    """Nurses upload medical records for patients"""
+    permission_classes = [CanUploadRecords]
     
     def post(self, request):
         serializer = MedicalRecordUploadSerializer(data=request.data)
@@ -117,6 +147,16 @@ class UploadMedicalRecordView(APIView):
                 status='SUCCESS'
             )
             
+            # Log the upload action
+            log_action(
+                user=request.user,
+                action='UPLOAD_RECORD',
+                resource_type='MEDICAL_RECORD',
+                resource_id=medical_record.id,
+                details=f"Uploaded {medical_record.record_type} for patient {patient.email}",
+                request=request
+            )
+            
             return Response({
                 'message': 'Medical record uploaded and registered on blockchain successfully',
                 'record': MedicalRecordSerializer(medical_record, context={'request': request}).data,
@@ -134,12 +174,23 @@ class UploadMedicalRecordView(APIView):
 
 
 class PatientRecordsView(generics.ListAPIView):
-    """IT Staff can view all records for a specific patient"""
-    permission_classes = [IsITStaff]
+    """View all records for a specific patient
+    - Receptionist: read-only access
+    - Nurse/Doctor: full access
+    - Patient: own records only
+    """
+    permission_classes = [CanViewRecords]
     serializer_class = MedicalRecordSerializer
     
     def get_queryset(self):
         patient_id = self.kwargs.get('patient_id')
+        user = self.request.user
+        
+        # Patients can only view their own records
+        if user.role == 'PATIENT':
+            return MedicalRecord.objects.filter(patient=user)
+        
+        # Medical staff can view any patient's records
         return MedicalRecord.objects.filter(patient_id=patient_id)
 
 
@@ -155,6 +206,14 @@ class MyMedicalRecordsView(generics.ListAPIView):
     ordering = ['-date_of_service']
     
     def get_queryset(self):
+        # Log the view action
+        log_action(
+            user=self.request.user,
+            action='VIEW_RECORDS',
+            resource_type='MEDICAL_RECORD',
+            details='Viewed own medical records',
+            request=self.request
+        )
         return MedicalRecord.objects.filter(patient=self.request.user)
 
 
@@ -177,44 +236,46 @@ class VerifyMyRecordView(APIView):
             record = MedicalRecord.objects.get(id=record_id, patient=request.user)
             
             # Open and hash the file
-            record.document_file.open('rb')
-            current_hash = hash_file(record.document_file)
-            record.document_file.close()
+            document_hash = hash_file(record.document_file)
             
             # Verify on blockchain
             blockchain_service = BlockchainService()
             verification_result = blockchain_service.verify_document(
-                user_id=request.user.id,
                 document_id=record.document_id,
-                document_hash=current_hash
+                document_hash=document_hash
             )
             
-            # Log transaction
+            # Update record verification status
+            record.is_verified = verification_result['is_valid']
+            record.save()
+            
+            # Log verification transaction
             BlockchainTransaction.objects.create(
                 user=request.user,
                 transaction_type='VERIFY',
                 transaction_hash=verification_result['transaction_hash'],
                 block_number=verification_result['block_number'],
-                status='SUCCESS'
+                gas_used=verification_result['gas_used'],
+                status='SUCCESS' if verification_result['is_valid'] else 'FAILED'
             )
             
-            is_valid = verification_result['is_valid']
+            # Log the verification action
+            log_action(
+                user=request.user,
+                action='VERIFY_RECORD',
+                resource_type='MEDICAL_RECORD',
+                resource_id=record.id,
+                details=f"Verified record {record.document_id}. Result: {record.is_verified}",
+                request=request
+            )
             
             return Response({
-                'message': 'Verification complete',
-                'is_valid': is_valid,
-                'document_id': record.document_id,
-                'stored_hash': record.document_hash,
-                'current_hash': current_hash,
-                'blockchain_verification': verification_result,
-                'result': 'VERIFIED - Document is authentic and unchanged' if is_valid else 'FAILED - Document has been modified or corrupted'
+                'is_valid': verification_result['is_valid'],
+                'blockchain_data': verification_result
             }, status=status.HTTP_200_OK)
-        
+            
         except MedicalRecord.DoesNotExist:
-            return Response({
-                'error': 'Medical record not found'
-            }, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response({'error': 'Record not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({
                 'error': f'Verification failed: {str(e)}'
@@ -222,73 +283,100 @@ class VerifyMyRecordView(APIView):
 
 
 # ==================== ADMIN VIEWS ====================
-
-class PendingPatientsView(generics.ListAPIView):
-    """Admin can view all pending patient registrations"""
-    permission_classes = [IsAdmin]
-    serializer_class = PatientListSerializer
-    
-    def get_queryset(self):
-        return User.objects.filter(role='PATIENT', account_status='PENDING')
-
-
-class ApproveRejectPatientView(APIView):
-    """Admin can approve or reject patient registration"""
-    permission_classes = [IsAdmin]
-    
-    def post(self, request, patient_id):
-        serializer = PatientApprovalSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        try:
-            patient = User.objects.get(id=patient_id, role='PATIENT')
-            action = serializer.validated_data['action']
-            
-            if action == 'approve':
-                patient.account_status = 'APPROVED'
-                message = f'Patient {patient.email} has been approved'
-            else:
-                patient.account_status = 'REJECTED'
-                message = f'Patient {patient.email} has been rejected'
-            
-            patient.save()
-            
-            return Response({
-                'message': message,
-                'patient': PatientListSerializer(patient).data
-            }, status=status.HTTP_200_OK)
-        
-        except User.DoesNotExist:
-            return Response({
-                'error': 'Patient not found'
-            }, status=status.HTTP_404_NOT_FOUND)
-
+from users.models import Appointment
 
 class SystemStatsView(APIView):
     """Admin can view system statistics"""
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAdmin | IsMedicalStaff]
     
     def get(self, request):
+        today = timezone.now().date()
+        
+        # Base stats for everyone
         stats = {
             'patients': {
                 'total': User.objects.filter(role='PATIENT').count(),
-                'pending': User.objects.filter(role='PATIENT', account_status='PENDING').count(),
-                'approved': User.objects.filter(role='PATIENT', account_status='APPROVED').count(),
-                'rejected': User.objects.filter(role='PATIENT', account_status='REJECTED').count(),
             },
-            'it_staff': {
-                'total': User.objects.filter(role='IT_STAFF').count(),
+            'staff': {
+                'receptionists': User.objects.filter(role='RECEPTIONIST').count(),
+                'nurses': User.objects.filter(role='NURSE').count(),
+                'doctors': User.objects.filter(role='DOCTOR').count(),
             },
             'medical_records': {
                 'total': MedicalRecord.objects.count(),
                 'confirmed': MedicalRecord.objects.filter(status='CONFIRMED').count(),
-                'pending': MedicalRecord.objects.filter(status='PENDING').count(),
-            },
-            'blockchain_transactions': {
-                'total': BlockchainTransaction.objects.count(),
-                'registrations': BlockchainTransaction.objects.filter(transaction_type='REGISTER').count(),
-                'verifications': BlockchainTransaction.objects.filter(transaction_type='VERIFY').count(),
             }
         }
+
+        # Personalized stats for doctors
+        if request.user.role == 'DOCTOR':
+            stats['personal'] = {
+                'today_appointments': Appointment.objects.filter(
+                    doctor=request.user, 
+                    appointment_date=today
+                ).count(),
+                'pending_checkins': Appointment.objects.filter(
+                    doctor=request.user,
+                    appointment_date=today,
+                    status='CHECKED_IN'
+                ).count()
+            }
         
         return Response(stats, status=status.HTTP_200_OK)
+            
+            
+class AuditLogView(generics.ListAPIView):
+    """Admin can view audit logs"""
+    permission_classes = [IsAdmin]
+    serializer_class = AuditLogSerializer
+    filter_backends = [filters.OrderingFilter]
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        return AuditLog.objects.all()
+
+
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404
+
+
+class DownloadMedicalRecordView(APIView):
+    """
+    Securely download medical record file and log the action.
+    Accessible by: 
+    - Patient (own records only)
+    - Receptionist (read-only, can print)
+    - Nurse/Doctor (full access)
+    - Admin (full access)
+    """
+    permission_classes = [CanViewRecords]
+    
+    def get(self, request, record_id):
+        record = get_object_or_404(MedicalRecord, id=record_id)
+        
+        # Check permissions based on role
+        user = request.user
+        
+        # Patients can only download their own records
+        if user.role == 'PATIENT' and record.patient != user:
+            return Response({
+                'error': 'You can only access your own medical records'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Log the download
+        log_action(
+            user=request.user,
+            action='DOWNLOAD_RECORD',
+            resource_type='MEDICAL_RECORD',
+            resource_id=record.id,
+            details=f"Downloaded file: {record.document_file.name}",
+            request=request
+        )
+        
+        # Serve file
+        if record.document_file:
+            response = FileResponse(record.document_file.open('rb'))
+            response['Content-Disposition'] = f'attachment; filename="{record.document_file.name.split("/")[-1]}"'
+            return response
+        else:
+            return Response({'error': 'File not found'}, status=status.HTTP_404_NOT_FOUND)

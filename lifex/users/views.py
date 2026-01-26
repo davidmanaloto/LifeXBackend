@@ -11,9 +11,18 @@ from .serializers import (
     UserUpdateSerializer,
     ChangePasswordSerializer
 )
-from .permissions import IsOwnerOrAdmin
+from .permissions import IsOwnerOrAdmin, IsAdmin
 
 User = get_user_model()
+
+class UserAdminView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Admin can view, update or delete any user
+    """
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdmin]
+    lookup_field = 'pk'
 
 
 class UserRegistrationView(generics.CreateAPIView):
@@ -53,10 +62,13 @@ class UserLoginView(APIView):
         serializer = UserLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        email = serializer.validated_data['email']
-        password = serializer.validated_data['password']
+        email = serializer.validated_data['email'].lower().strip()
+        password = serializer.validated_data['password'].strip()
         
         user = authenticate(email=email, password=password)
+        
+        if user is None:
+            user = authenticate(username=email, password=password)
         
         if user is None:
             return Response(
@@ -167,9 +179,9 @@ class UserListView(generics.ListAPIView):
         if user.role == 'ADMIN':
             return User.objects.all()
         
-        # Staff can see regular users only
-        if user.role == 'STAFF':
-            return User.objects.filter(role='USER')
+        # Medical Staff (Receptionist, Nurse, Doctor) can see Patients
+        if user.role in ['RECEPTIONIST', 'NURSE', 'DOCTOR']:
+            return User.objects.filter(role='PATIENT')
         
-        # Regular users can only see themselves
+        # Patients can only see themselves
         return User.objects.filter(id=user.id)

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,284 +11,316 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        
+
         .container {
             max-width: 1000px;
             margin: 0 auto;
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
         }
-        
+
         header {
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 20px;
+            border-bottom: 2px solid #eef2f7;
+            padding-bottom: 24px;
             margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        
+
         h1 {
-            color: #333;
+            color: #1a1a1a;
             font-size: 28px;
+            font-weight: 700;
         }
-        
+
         .user-info {
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        .status-banner {
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 600;
-        }
-        
-        .status-pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .status-approved {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .search-box {
-            margin-bottom: 20px;
-        }
-        
-        .search-box input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
+            color: #64748b;
             font-size: 14px;
         }
-        
+
+        .logout-link {
+            color: #ef4444;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .search-box {
+            margin-bottom: 24px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+
         .search-box input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
-        
+
         .record-card {
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            transition: all 0.3s;
+            border: 1px solid #eef2f7;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: 0.3s;
         }
-        
+
         .record-card:hover {
-            border-color: #667eea;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+            border-color: #e2e8f0;
         }
-        
+
         .record-header {
             display: flex;
             justify-content: space-between;
             align-items: start;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
-        
+
         .record-title h3 {
-            color: #333;
-            margin-bottom: 5px;
+            color: #1a1a1a;
+            font-size: 18px;
+            margin-bottom: 4px;
         }
-        
+
         .record-type {
-            padding: 5px 12px;
-            background: #667eea;
+            padding: 4px 12px;
+            background: #4f46e5;
             color: white;
             border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
         }
-        
+
         .record-details {
-            color: #666;
+            color: #475569;
             font-size: 14px;
             line-height: 1.6;
         }
-        
+
         .record-details p {
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
-        
+
         .record-actions {
-            margin-top: 15px;
+            margin-top: 20px;
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
-        
+
         .btn {
             padding: 10px 20px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            transition: all 0.3s;
+            transition: 0.2s;
         }
-        
+
         .btn-primary {
-            background: #667eea;
+            background: #4f46e5;
             color: white;
         }
-        
+
         .btn-primary:hover {
-            background: #5568d3;
+            background: #4338ca;
         }
-        
+
         .blockchain-badge {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            padding: 5px 12px;
-            background: #d4edda;
-            color: #155724;
+            gap: 4px;
+            padding: 4px 10px;
+            background: #dcfce7;
+            color: #15803d;
             border-radius: 20px;
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
         }
-        
+
         .blockchain-badge.unverified {
-            background: #fff3cd;
-            color: #856404;
+            background: #fee2e2;
+            color: #b91c1c;
         }
-        
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #666;
-        }
-        
-        .empty-state svg {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-        
+
         .loading {
             text-align: center;
-            padding: 40px;
-            color: #666;
+            padding: 60px;
+            color: #94a3b8;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
-            <h1>🏥 Patient Portal</h1>
-            <p class="user-info">Welcome, <span id="patientName">Loading...</span></p>
-            <p class="user-info">Email: <span id="patientEmail">Loading...</span> | <a href="/login/" style="color: #667eea;">Logout</a></p>
+            <div>
+                <h1>🏥 Patient Portal</h1>
+                <p class="user-info">Signed in as <span id="patientName">...</span></p>
+            </div>
+            <a href="/login/" class="logout-link" onclick="sessionStorage.clear()">Sign Out</a>
         </header>
 
-        <div id="statusBanner"></div>
-
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="🔍 Search your medical records...">
+        <div class="tabs" style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 2px solid #eef2f7;">
+            <button class="tab active" id="tab-records" onclick="showTab('records')"
+                style="padding: 12px 24px; background: none; border: none; cursor: pointer; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent;">Medical
+                Records</button>
+            <button class="tab" id="tab-appointments" onclick="showTab('appointments')"
+                style="padding: 12px 24px; background: none; border: none; cursor: pointer; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent;">My
+                Appointments</button>
         </div>
 
-        <div id="recordsList">
-            <p class="loading">Loading your medical records...</p>
+        <div id="content-records" class="tab-content">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Search through your medical records...">
+            </div>
+            <div id="recordsList">
+                <div class="loading">Loading your medical records...</div>
+            </div>
+        </div>
+
+        <div id="content-appointments" class="tab-content" style="display: none;">
+            <div id="appointmentsList">
+                <div class="loading">Loading your appointments...</div>
+            </div>
         </div>
     </div>
 
+    <style>
+        .tab.active {
+            color: #4f46e5 !important;
+            border-bottom-color: #4f46e5 !important;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-active {
+            background: #dcfce7;
+            color: #15803d;
+        }
+    </style>
+
     <script>
-        const API_BASE = 'http://127.0.0.1:8000/api';
-        let authToken = '';
+        const API_BASE = '/api';
+        let authToken = sessionStorage.getItem('access_token');
         let allRecords = [];
 
-        // Initialize
         window.addEventListener('DOMContentLoaded', () => {
-            // Get token from sessionStorage
-            authToken = sessionStorage.getItem('access_token');
-            
             if (!authToken) {
-                // No token - redirect to login
-                alert('Please login to access the Patient Portal');
                 window.location.href = '/login/';
                 return;
             }
-            
             loadPatientInfo();
             loadMedicalRecords();
-            
+            loadAppointments();
             document.getElementById('searchInput').addEventListener('input', searchRecords);
         });
 
-        // Load patient info
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
+            document.getElementById(`content-${tabId}`).style.display = 'block';
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        }
+
+        async function loadAppointments() {
+            const list = document.getElementById('appointmentsList');
+            try {
+                const response = await fetch(`${API_BASE}/auth/appointments/`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await response.json();
+                displayAppointments(data);
+            } catch (err) {
+                list.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">No appointments found.</div>';
+            }
+        }
+
+        function displayAppointments(appointments) {
+            const container = document.getElementById('appointmentsList');
+            if (appointments.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">No appointments scheduled.</div>';
+                return;
+            }
+
+            container.innerHTML = appointments.map(app => `
+                <div class="record-card">
+                    <div class="record-header">
+                        <div class="record-title">
+                            <h3>Dr. ${app.doctor_name}</h3>
+                            <span class="badge ${app.status === 'SCHEDULED' ? 'badge-pending' : 'badge-active'}">${app.status}</span>
+                        </div>
+                        <span class="record-type">${app.appointment_type.replace(/_/g, ' ')}</span>
+                    </div>
+                    <div class="record-details">
+                        <p><strong>📅 Date:</strong> ${app.appointment_date}</p>
+                        <p><strong>🕒 Time:</strong> ${app.appointment_time}</p>
+                        ${app.reason ? `<p><strong>📝 Reason:</strong> ${app.reason}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
         async function loadPatientInfo() {
             try {
                 const response = await fetch(`${API_BASE}/auth/profile/`, {
-                    headers: {'Authorization': `Bearer ${authToken}`}
+                    headers: { 'Authorization': `Bearer ${authToken}` }
                 });
                 const data = await response.json();
-                
-                document.getElementById('patientName').textContent = data.full_name || 'Patient';
-                document.getElementById('patientEmail').textContent = data.email;
-                
-                // Show status banner
-                const banner = document.getElementById('statusBanner');
-                if (data.account_status === 'PENDING') {
-                    banner.className = 'status-banner status-pending';
-                    banner.textContent = '⏳ Your account is pending approval by an administrator';
-                } else if (data.account_status === 'APPROVED') {
-                    banner.className = 'status-banner status-approved';
-                    banner.textContent = '✅ Your account is approved and active';
-                }
-            } catch (error) {
-                console.error('Failed to load profile', error);
-            }
+                document.getElementById('patientName').textContent = data.full_name || data.email;
+            } catch (err) { console.error(err); }
         }
 
-        // Load medical records
         async function loadMedicalRecords() {
+            const list = document.getElementById('recordsList');
             try {
                 const response = await fetch(`${API_BASE}/blockchain/patient/my-records/`, {
-                    headers: {'Authorization': `Bearer ${authToken}`}
+                    headers: { 'Authorization': `Bearer ${authToken}` }
                 });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to load records');
-                }
-                
+                if (!response.ok) throw new Error();
                 allRecords = await response.json();
                 displayRecords(allRecords);
-            } catch (error) {
-                document.getElementById('recordsList').innerHTML = `
-                    <div class="empty-state">
-                        <p>❌ Failed to load medical records</p>
-                        <p style="font-size: 14px; margin-top: 10px;">${error.message}</p>
-                    </div>
-                `;
+            } catch (err) {
+                list.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">No medical records found.</div>';
             }
         }
 
-        // Display records
         function displayRecords(records) {
             const container = document.getElementById('recordsList');
-            
             if (records.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        <h3>No Medical Records Yet</h3>
-                        <p>Your medical records will appear here once uploaded by medical staff.</p>
-                    </div>
-                `;
+                container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">No medical records found.</div>';
                 return;
             }
 
@@ -297,47 +330,37 @@
                         <div class="record-title">
                             <h3>${record.title}</h3>
                             <span class="blockchain-badge ${record.is_verified ? '' : 'unverified'}">
-                                ${record.is_verified ? '✓' : '⏳'} ${record.is_verified ? 'Verified on Blockchain' : 'Pending Verification'}
+                                ${record.is_verified ? '✓ Verified on Blockchain' : '⚠️ Pending Verification'}
                             </span>
                         </div>
-                        <span class="record-type">${formatRecordType(record.record_type)}</span>
+                        <span class="record-type">${record.record_type.replace(/_/g, ' ')}</span>
                     </div>
                     
                     <div class="record-details">
-                        ${record.description ? `<p><strong>Details:</strong> ${record.description}</p>` : ''}
+                        ${record.description ? `<p><strong>Notes:</strong> ${record.description}</p>` : ''}
                         <p><strong>📅 Date of Service:</strong> ${new Date(record.date_of_service).toLocaleDateString()}</p>
-                        ${record.department ? `<p><strong>🏥 Department:</strong> ${record.department}</p>` : ''}
                         <p><strong>👨‍⚕️ Uploaded by:</strong> ${record.uploaded_by_name}</p>
-                        <p><strong>📄 File Type:</strong> ${record.file_extension} (${record.file_size_mb})</p>
-                        <p><strong>🔗 Blockchain TX:</strong> <code>${record.short_tx_hash}</code></p>
-                        <p><strong>📦 Block:</strong> #${record.block_number}</p>
+                        <p><strong>🔗 Blockchain Hash:</strong> <code>${record.short_tx_hash}</code></p>
                     </div>
                     
                     <div class="record-actions">
                         <button class="btn btn-primary" onclick="window.open('${record.file_url}', '_blank')">
-                            📥 Download Record
+                            Download File
                         </button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Format record type
-        function formatRecordType(type) {
-            return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        }
-
-        // Search records
         function searchRecords() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allRecords.filter(record => 
-                record.title.toLowerCase().includes(searchTerm) ||
-                record.description.toLowerCase().includes(searchTerm) ||
-                record.record_type.toLowerCase().includes(searchTerm) ||
-                (record.department && record.department.toLowerCase().includes(searchTerm))
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allRecords.filter(r =>
+                r.title.toLowerCase().includes(term) ||
+                r.record_type.toLowerCase().includes(term)
             );
             displayRecords(filtered);
         }
     </script>
 </body>
+
 </html>

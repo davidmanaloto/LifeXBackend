@@ -41,7 +41,7 @@ class MedicalRecord(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name='uploaded_records',
-        limit_choices_to={'role': 'IT_STAFF'}
+        limit_choices_to={'role': 'NURSE'}
     )
     
     # Record information
@@ -203,3 +203,46 @@ class BlockchainTransaction(models.Model):
     
     def __str__(self):
         return f"{self.transaction_type} - {self.transaction_hash[:10]}..."
+
+
+class AuditLog(models.Model):
+    """
+    Track important user actions for security auditing
+    """
+    ACTION_CHOICES = (
+        ('LOGIN', 'User Login'),
+        ('LOGOUT', 'User Logout'),
+        ('REGISTER_PATIENT', 'Register Patient'),
+        ('APPROVE_PATIENT', 'Approve Patient'),
+        ('REJECT_PATIENT', 'Reject Patient'),
+        ('UPLOAD_RECORD', 'Upload Medical Record'),
+        ('VIEW_RECORDS', 'View Medical Records'),
+        ('DOWNLOAD_RECORD', 'Download Medical Record'),
+        ('VERIFY_RECORD', 'Verify Record on Blockchain'),
+    )
+    
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='audit_logs'
+    )
+    
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    resource_type = models.CharField(max_length=50, blank=True)
+    resource_id = models.CharField(max_length=50, blank=True)
+    details = models.TextField(blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user']),
+            models.Index(fields=['action']),
+            models.Index(fields=['created_at']),
+        ]
+        
+    def __str__(self):
+        return f"{self.user} - {self.action} - {self.created_at}"

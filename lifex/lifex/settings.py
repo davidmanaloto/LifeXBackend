@@ -1,22 +1,25 @@
 import os
 from pathlib import Path
 from datetime import timedelta
-from decouple import config
+from dotenv import load_dotenv
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config(('SECRET_KEY'), default='django-insecure-7d1+(a^&s_2it&vitrmd+)#5mmi2=krkdnn24z-*u=c%ns31j)')
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-7d1+(a^&s_2it&vitrmd+)#5mmi2=krkdnn24z-*u=c%ns31j)')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -29,8 +32,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'users',
-    'core',
-    'api',
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_spectacular',
@@ -115,9 +116,9 @@ USE_TZ = True
 
 # Blockchain Config
 BLOCKCHAIN_CONFIG = {
-    'GANACHE_URL': 'http://127.0.0.1:7545',
-    'CONTRACT_ADDRESS': None,  # Will be updated after deployment
-    'CHAIN_ID': 1337,  # Ganache default
+    'GANACHE_URL': os.getenv('GANACHE_URL', 'http://127.0.0.1:7545'),
+    'CONTRACT_ADDRESS': os.getenv('CONTRACT_ADDRESS'),
+    'CHAIN_ID': int(os.getenv('CHAIN_ID', '1337')),
 }
 
 

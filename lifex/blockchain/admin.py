@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import BlockchainDocument, BlockchainTransaction, MedicalRecord
+from .models import BlockchainDocument, BlockchainTransaction, MedicalRecord, AuditLog
 
 
 @admin.register(MedicalRecord)
@@ -140,3 +140,39 @@ class BlockchainTransactionAdmin(admin.ModelAdmin):
         return '-'
     
     short_tx_hash.short_description = 'TX Hash'
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    """Admin interface for AuditLog"""
+    
+    list_display = (
+        'id',
+        'user',
+        'action',
+        'resource_type',
+        'resource_id',
+        'ip_address',
+        'created_at'
+    )
+    
+    list_filter = ('action', 'resource_type', 'created_at')
+    search_fields = ('user__email', 'details', 'resource_id', 'ip_address')
+    readonly_fields = (
+        'user',
+        'action',
+        'resource_type',
+        'resource_id',
+        'details',
+        'ip_address',
+        'created_at'
+    )
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False

@@ -6,7 +6,7 @@ User = get_user_model()
 
 
 class PatientRegistrationSerializer(serializers.ModelSerializer):
-    """Serializer for IT Staff to register new patients"""
+    """Serializer for Staff to register new patients"""
     password = serializers.CharField(write_only=True, required=True)
     
     class Meta:
@@ -14,12 +14,11 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
         fields = ('email', 'password', 'first_name', 'last_name')
     
     def create(self, validated_data):
-        """Create patient with PENDING status"""
+        """Create patient"""
         password = validated_data.pop('password')
         user = User.objects.create_user(
             password=password,
             role='PATIENT',
-            account_status='PENDING',
             **validated_data
         )
         return user
@@ -29,6 +28,7 @@ class PatientListSerializer(serializers.ModelSerializer):
     """Serializer for listing patients"""
     full_name = serializers.SerializerMethodField()
     records_count = serializers.SerializerMethodField()
+    age = serializers.IntegerField(read_only=True)
     
     class Meta:
         model = User
@@ -38,8 +38,8 @@ class PatientListSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'full_name',
-            'account_status',
-            'kyc_status',
+            'gender',
+            'age',
             'date_joined',
             'records_count'
         )
@@ -52,7 +52,7 @@ class PatientListSerializer(serializers.ModelSerializer):
 
 
 class MedicalRecordUploadSerializer(serializers.ModelSerializer):
-    """Serializer for IT Staff to upload medical records"""
+    """Serializer for Staff to upload medical records"""
     patient_email = serializers.EmailField(write_only=True)
     
     class Meta:
@@ -68,13 +68,9 @@ class MedicalRecordUploadSerializer(serializers.ModelSerializer):
         )
     
     def validate_patient_email(self, value):
-        """Validate that patient exists and is approved"""
+        """Validate that patient exists"""
         try:
-            patient = User.objects.get(email=value, role='PATIENT')
-            if patient.account_status != 'APPROVED':
-                raise serializers.ValidationError(
-                    "Patient account is not approved yet."
-                )
+            User.objects.get(email=value, role='PATIENT')
             return value
         except User.DoesNotExist:
             raise serializers.ValidationError(
@@ -157,7 +153,25 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
         return None
 
 
-class PatientApprovalSerializer(serializers.Serializer):
-    """Serializer for approving/rejecting patients"""
-    action = serializers.ChoiceField(choices=['approve', 'reject'])
-    reason = serializers.CharField(required=False, allow_blank=True)
+from .models import AuditLog
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    """Serializer for Audit Logs"""
+    user_name = serializers.CharField(source='user.get_full_name', read_only=True, default='')
+    user_email = serializers.EmailField(source='user.email', read_only=True, default='')
+    user_role = serializers.CharField(source='user.role', read_only=True, default='')
+    
+    class Meta:
+        model = AuditLog
+        fields = (
+            'id',
+            'user_name',
+            'user_email',
+            'user_role',
+            'action',
+            'resource_type',
+            'resource_id',
+            'details',
+            'ip_address',
+            'created_at'
+        )
