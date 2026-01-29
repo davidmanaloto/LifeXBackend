@@ -5,87 +5,183 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Portal - Medical Records</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #EEF2FF;
+            --secondary: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --info: #3B82F6;
+            --dark: #1F2937;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-600: #4B5563;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            background-color: var(--gray-50);
+            color: var(--dark);
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 280px;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border-right: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-items {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--gray-600);
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: var(--gray-100);
+        }
+
+        .nav-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .user-card {
+            margin-top: auto;
+            padding-top: 24px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .user-info-mini {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
             padding: 40px;
+            overflow-y: auto;
+            background: var(--gray-50);
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         header {
-            border-bottom: 2px solid #eef2f7;
-            padding-bottom: 24px;
-            margin-bottom: 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 32px;
         }
 
-        h1 {
-            color: #1a1a1a;
+        .page-title h1 {
             font-size: 28px;
             font-weight: 700;
+            margin-bottom: 4px;
         }
 
-        .user-info {
-            color: #64748b;
-            font-size: 14px;
+        .page-title p {
+            color: var(--gray-600);
         }
 
-        .logout-link {
-            color: #ef4444;
-            font-weight: 600;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .search-box {
-            margin-bottom: 24px;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 15px;
-            transition: 0.2s;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        .record-card {
-            border: 1px solid #eef2f7;
+        /* Cards & UI Elements */
+        .card {
+            background: white;
             border-radius: 12px;
+            border: 1px solid var(--gray-200);
             padding: 24px;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             transition: 0.3s;
         }
 
-        .record-card:hover {
+        .card:hover {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             transform: translateY(-2px);
-            border-color: #e2e8f0;
         }
 
         .record-header {
@@ -96,114 +192,198 @@
         }
 
         .record-title h3 {
-            color: #1a1a1a;
             font-size: 18px;
+            font-weight: 700;
             margin-bottom: 4px;
         }
 
-        .record-type {
+        .badge {
             padding: 4px 12px;
-            background: #4f46e5;
-            color: white;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 600;
             text-transform: uppercase;
         }
 
-        .record-details {
-            color: #475569;
-            font-size: 14px;
-            line-height: 1.6;
+        .badge-primary {
+            background: var(--primary-light);
+            color: var(--primary);
         }
 
-        .record-details p {
-            margin-bottom: 6px;
+        .badge-success {
+            background: #D1FAE5;
+            color: #065F46;
         }
 
-        .record-actions {
-            margin-top: 20px;
-            display: flex;
-            gap: 12px;
+        .badge-warning {
+            background: #FEF3C7;
+            color: #92400E;
         }
 
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-
-        .btn-primary {
-            background: #4f46e5;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #4338ca;
+        .badge-danger {
+            background: #FEE2E2;
+            color: #991B1B;
         }
 
         .blockchain-badge {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            background: #dcfce7;
-            color: #15803d;
-            border-radius: 20px;
-            font-size: 12px;
+            gap: 6px;
+            padding: 4px 12px;
+            background: #ECFDF5;
+            color: #059669;
+            border-radius: 99px;
+            font-size: 11px;
             font-weight: 700;
+            border: 1px solid #D1FAE5;
         }
 
         .blockchain-badge.unverified {
-            background: #fee2e2;
-            color: #b91c1c;
+            background: #FFF7ED;
+            color: #D97706;
+            border-color: #FFEDD5;
         }
 
-        .loading {
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4338CA;
+        }
+
+        /* Search Box */
+        .search-container {
+            margin-bottom: 24px;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: 0.2s;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-container input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        .loading-pulse {
+            animation: pulse 1.5s infinite;
+            color: var(--gray-600);
             text-align: center;
-            padding: 60px;
-            color: #94a3b8;
+            padding: 40px;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 64px 32px;
+            color: var(--gray-600);
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <header>
-            <div>
-                <h1>🏥 Patient Portal</h1>
-                <p class="user-info">Signed in as <span id="patientName">...</span></p>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="24" height="24" rx="6" fill="#4F46E5" />
+                    <path d="M12 7V17M7 12H17" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                </svg>
+                LifeX
             </div>
-            <a href="/login/" class="logout-link" onclick="sessionStorage.clear()">Sign Out</a>
-        </header>
 
-        <div class="tabs" style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 2px solid #eef2f7;">
-            <button class="tab active" id="tab-records" onclick="showTab('records')"
-                style="padding: 12px 24px; background: none; border: none; cursor: pointer; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent;">Medical
-                Records</button>
-            <button class="tab" id="tab-appointments" onclick="showTab('appointments')"
-                style="padding: 12px 24px; background: none; border: none; cursor: pointer; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent;">My
-                Appointments</button>
-        </div>
+            <nav class="nav-items">
+                <div class="nav-item active" id="nav-records" onclick="showTab('records')">
+                    <span>📑</span>
+                    <span>Medical Records</span>
+                </div>
+                <div class="nav-item" id="nav-appointments" onclick="showTab('appointments')">
+                    <span>📅</span>
+                    <span>My Appointments</span>
+                </div>
+            </nav>
 
-        <div id="content-records" class="tab-content">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="🔍 Search through your medical records...">
+            <div class="user-card">
+                <div class="user-info-mini">
+                    <div class="user-avatar" id="sidebarAvatar">P</div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 14px;" id="sidebarPatientName">Loading...</div>
+                        <div style="font-size: 12px; color: var(--gray-600);">Patient</div>
+                    </div>
+                </div>
+                <a href="/login/" class="logout-btn" onclick="sessionStorage.clear()">Sign Out</a>
             </div>
-            <div id="recordsList">
-                <div class="loading">Loading your medical records...</div>
-            </div>
-        </div>
+        </aside>
 
-        <div id="content-appointments" class="tab-content" style="display: none;">
-            <div id="appointmentsList">
-                <div class="loading">Loading your appointments...</div>
-            </div>
-        </div>
+        <!-- Main Content -->
+        <main>
+            <!-- Records Section -->
+            <section id="content-records" class="view-section active">
+                <header>
+                    <div class="page-title">
+                        <h1>Medical Records</h1>
+                        <p>Blockchain-verified history of your healthcare documents.</p>
+                    </div>
+                </header>
+
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Search through your medical records...">
+                </div>
+
+                <div id="recordsList">
+                    <div class="loading-pulse">Retrieving your encrypted records...</div>
+                </div>
+            </section>
+
+            <!-- Appointments Section -->
+            <section id="content-appointments" class="view-section">
+                <header>
+                    <div class="page-title">
+                        <h1>My Appointments</h1>
+                        <p>Manage your upcoming and past doctor visits.</p>
+                    </div>
+                </header>
+
+                <div id="appointmentsList">
+                    <div class="loading-pulse">Loading your schedule...</div>
+                </div>
+            </section>
+        </main>
     </div>
 
     <style>
@@ -248,49 +428,11 @@
         });
 
         function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
 
-            document.getElementById(`content-${tabId}`).style.display = 'block';
-            document.getElementById(`tab-${tabId}`).classList.add('active');
-        }
-
-        async function loadAppointments() {
-            const list = document.getElementById('appointmentsList');
-            try {
-                const response = await fetch(`${API_BASE}/auth/appointments/`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                const data = await response.json();
-                displayAppointments(data);
-            } catch (err) {
-                list.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">No appointments found.</div>';
-            }
-        }
-
-        function displayAppointments(appointments) {
-            const container = document.getElementById('appointmentsList');
-            if (appointments.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">No appointments scheduled.</div>';
-                return;
-            }
-
-            container.innerHTML = appointments.map(app => `
-                <div class="record-card">
-                    <div class="record-header">
-                        <div class="record-title">
-                            <h3>Dr. ${app.doctor_name}</h3>
-                            <span class="badge ${app.status === 'SCHEDULED' ? 'badge-pending' : 'badge-active'}">${app.status}</span>
-                        </div>
-                        <span class="record-type">${app.appointment_type.replace(/_/g, ' ')}</span>
-                    </div>
-                    <div class="record-details">
-                        <p><strong>📅 Date:</strong> ${app.appointment_date}</p>
-                        <p><strong>🕒 Time:</strong> ${app.appointment_time}</p>
-                        ${app.reason ? `<p><strong>📝 Reason:</strong> ${app.reason}</p>` : ''}
-                    </div>
-                </div>
-            `).join('');
+            document.getElementById(`content-${tabId}`).classList.add('active');
+            document.getElementById(`nav-${tabId}`).classList.add('active');
         }
 
         async function loadPatientInfo() {
@@ -299,7 +441,8 @@
                     headers: { 'Authorization': `Bearer ${authToken}` }
                 });
                 const data = await response.json();
-                document.getElementById('patientName').textContent = data.full_name || data.email;
+                document.getElementById('sidebarPatientName').textContent = data.full_name || data.email;
+                document.getElementById('sidebarAvatar').textContent = (data.first_name?.[0] || 'P').toUpperCase() + (data.last_name?.[0] || '').toUpperCase();
             } catch (err) { console.error(err); }
         }
 
@@ -313,40 +456,78 @@
                 allRecords = await response.json();
                 displayRecords(allRecords);
             } catch (err) {
-                list.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">No medical records found.</div>';
+                list.innerHTML = '<div class="empty-state">No medical records found.</div>';
+            }
+        }
+
+        async function loadAppointments() {
+            const list = document.getElementById('appointmentsList');
+            try {
+                const response = await fetch(`${API_BASE}/auth/appointments/`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await response.json();
+                displayAppointments(data);
+            } catch (err) {
+                list.innerHTML = '<div class="empty-state">No appointments found.</div>';
             }
         }
 
         function displayRecords(records) {
             const container = document.getElementById('recordsList');
             if (records.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">No medical records found.</div>';
+                container.innerHTML = '<div class="empty-state">No medical records found in your account.</div>';
                 return;
             }
 
             container.innerHTML = records.map(record => `
-                <div class="record-card">
+                <div class="card">
                     <div class="record-header">
                         <div class="record-title">
                             <h3>${record.title}</h3>
-                            <span class="blockchain-badge ${record.is_verified ? '' : 'unverified'}">
-                                ${record.is_verified ? '✓ Verified on Blockchain' : '⚠️ Pending Verification'}
-                            </span>
+                            <div class="blockchain-badge ${record.is_verified ? '' : 'unverified'}">
+                                ${record.is_verified ? '✓ Verified on Blockchain' : '⚠️ Verification Pending'}
+                            </div>
                         </div>
-                        <span class="record-type">${record.record_type.replace(/_/g, ' ')}</span>
+                        <span class="badge badge-primary">${record.record_type.replace(/_/g, ' ')}</span>
                     </div>
                     
-                    <div class="record-details">
-                        ${record.description ? `<p><strong>Notes:</strong> ${record.description}</p>` : ''}
-                        <p><strong>📅 Date of Service:</strong> ${new Date(record.date_of_service).toLocaleDateString()}</p>
-                        <p><strong>👨‍⚕️ Uploaded by:</strong> ${record.uploaded_by_name}</p>
-                        <p><strong>🔗 Blockchain Hash:</strong> <code>${record.short_tx_hash}</code></p>
+                    <div style="font-size: 14px; color: var(--gray-600); line-height: 1.6; margin-bottom: 20px;">
+                        ${record.description ? `<p style="margin-bottom: 12px;">${record.description}</p>` : ''}
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; background: var(--gray-50); padding: 16px; border-radius: 8px;">
+                            <div><strong>📅 Date:</strong> ${new Date(record.date_of_service).toLocaleDateString()}</div>
+                            <div><strong>👨‍⚕️ Provider:</strong> ${record.uploaded_by_name}</div>
+                            <div style="grid-column: 1/-1;"><strong>🔗 Hash:</strong> <code style="font-family: monospace; font-size: 12px;">${record.tx_hash}</code></div>
+                        </div>
                     </div>
                     
-                    <div class="record-actions">
-                        <button class="btn btn-primary" onclick="window.open('${record.file_url}', '_blank')">
-                            Download File
-                        </button>
+                    <button class="btn btn-primary" onclick="window.open('${record.file_url}', '_blank')">
+                        <span>📥</span> Download Record
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function displayAppointments(appointments) {
+            const container = document.getElementById('appointmentsList');
+            if (appointments.length === 0) {
+                container.innerHTML = '<div class="empty-state">No upcoming appointments scheduled.</div>';
+                return;
+            }
+
+            container.innerHTML = appointments.map(app => `
+                <div class="card">
+                    <div class="record-header">
+                        <div class="record-title">
+                            <h3>Dr. ${app.doctor_name}</h3>
+                            <span class="badge ${app.status === 'SCHEDULED' ? 'badge-warning' : 'badge-success'}">${app.status}</span>
+                        </div>
+                        <span class="badge badge-primary">${app.appointment_type.replace(/_/g, ' ')}</span>
+                    </div>
+                    <div style="font-size: 14px; color: var(--gray-600); line-height: 1.6;">
+                        <p><strong>📅 Date:</strong> ${app.appointment_date}</p>
+                        <p><strong>🕒 Time:</strong> ${app.appointment_time}</p>
+                        ${app.reason ? `<p style="margin-top: 8px;"><strong>📝 Reason:</strong> ${app.reason}</p>` : ''}
                     </div>
                 </div>
             `).join('');

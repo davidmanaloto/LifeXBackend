@@ -5,137 +5,136 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - LifeX</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #EEF2FF;
+            --secondary: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --info: #3B82F6;
+            --dark: #1F2937;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-600: #4B5563;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            background-color: var(--gray-50);
+            color: var(--dark);
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            padding: 30px;
-        }
-
-        header {
-            border-bottom: 2px solid #eef2f7;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
+        .app-container {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            height: 100vh;
         }
 
-        h1 {
-            color: #1a1a1a;
-            font-size: 28px;
+        /* Sidebar Styles */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+        }
+
+        .logo {
+            font-size: 24px;
             font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .user-info {
-            color: #64748b;
-            margin-top: 5px;
+        .nav-items {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--gray-600);
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: var(--gray-100);
+        }
+
+        .nav-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .user-card {
+            margin-top: auto;
+            padding-top: 24px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .user-info-mini {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
             font-size: 14px;
         }
 
         .logout-btn {
-            padding: 10px 24px;
-            background: #ef4444;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: #dc2626;
-            transform: translateY(-1px);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 24px;
-            border-radius: 12px;
-            border: 1px solid #eef2f7;
-            transition: 0.3s;
-        }
-
-        .stat-card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            transform: translateY(-2px);
-        }
-
-        .stat-card h3 {
-            font-size: 13px;
-            color: #64748b;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-card .number {
-            font-size: 36px;
-            font-weight: 800;
-            color: #4f46e5;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-            border-bottom: 2px solid #f1f5f9;
-        }
-
-        .tab {
-            padding: 12px 24px;
-            background: none;
-            border: none;
+            color: var(--danger);
             cursor: pointer;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
-            color: #64748b;
-            position: relative;
-            transition: 0.2s;
+            text-decoration: none;
         }
 
-        .tab.active {
-            color: #4f46e5;
+        /* Main Content */
+        main {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            background: var(--gray-50);
         }
 
-        .tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #4f46e5;
-        }
-
-        .tab-content {
+        .view-section {
             display: none;
         }
 
-        .tab-content.active {
+        .view-section.active {
             display: block;
             animation: fadeIn 0.3s ease;
         }
@@ -143,7 +142,7 @@
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(5px);
+                transform: translateY(10px);
             }
 
             to {
@@ -152,14 +151,114 @@
             }
         }
 
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .page-title h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .page-title p {
+            color: var(--gray-600);
+        }
+
+        /* Cards & UI Elements */
+        .card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            transition: 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card .label {
+            color: var(--gray-600);
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-200);
+            color: var(--gray-600);
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 14px;
+        }
+
+        tr:hover td {
+            background-color: var(--gray-50);
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-active {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
         .search-box {
             margin-bottom: 24px;
         }
 
         .search-box input {
             width: 100%;
-            padding: 14px 16px;
-            border: 1px solid #e2e8f0;
+            padding: 14px;
+            border: 1px solid var(--gray-200);
             border-radius: 10px;
             font-size: 15px;
             transition: 0.2s;
@@ -167,52 +266,15 @@
 
         .search-box input:focus {
             outline: none;
-            border-color: #4f46e5;
+            border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        th {
-            background: #f8fafc;
-            padding: 16px;
-            text-align: left;
-            font-size: 13px;
-            font-weight: 600;
-            color: #64748b;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        td {
-            padding: 16px;
-            font-size: 14px;
-            color: #334155;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        tr:hover td {
-            background: #f8fafc;
-        }
-
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            background: #dcfce7;
-            color: #15803d;
-        }
-
         .loading-pulse {
-            text-align: center;
-            padding: 60px;
-            color: #94a3b8;
             animation: pulse 1.5s infinite;
+            color: var(--gray-600);
+            text-align: center;
+            padding: 40px;
         }
 
         @keyframes pulse {
@@ -226,73 +288,110 @@
                 opacity: 0.5;
             }
         }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px;
-            color: #94a3b8;
-        }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <header>
-            <div>
-                <h1>👑 Admin Dashboard</h1>
-                <p class="user-info">Logged in as: <span id="adminEmail">...</span></p>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="24" height="24" rx="6" fill="#4F46E5" />
+                    <path d="M12 7V17M7 12H17" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                </svg>
+                LifeX
             </div>
-            <a href="/login/" class="logout-btn" onclick="sessionStorage.clear()">Logout</a>
-        </header>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>Total Patients</h3>
-                <div class="number" id="totalPatients">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>Medical Records</h3>
-                <div class="number" id="totalRecords">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>Active Staff</h3>
-                <div class="number" id="totalStaff">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>Blockchain Ops</h3>
-                <div class="number" id="totalTx">0</div>
-            </div>
-        </div>
+            <nav class="nav-items">
+                <div class="nav-item active" id="nav-all" onclick="showTab('all')">
+                    <span>👥</span>
+                    <span>Patient Directory</span>
+                </div>
+                <div class="nav-item" id="nav-logs" onclick="showTab('logs')">
+                    <span>📜</span>
+                    <span>Audit Logs</span>
+                </div>
+                <div class="nav-item" id="nav-stats" onclick="showTab('stats')">
+                    <span>📈</span>
+                    <span>System Health</span>
+                </div>
+            </nav>
 
-        <div class="tabs">
-            <button class="tab active" onclick="showTab('all')">Patient Directory</button>
-            <button class="tab" onclick="showTab('logs')">System Audit Logs</button>
-            <button class="tab" onclick="showTab('stats')">Health Metrics</button>
-        </div>
+            <div class="user-card">
+                <div class="user-info-mini">
+                    <div class="user-avatar" id="sidebarAvatar">A</div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 14px;" id="adminEmailSidebar">Admin</div>
+                        <div style="font-size: 12px; color: var(--gray-600);">System Administrator</div>
+                    </div>
+                </div>
+                <a href="/login/" class="logout-btn" onclick="sessionStorage.clear()">Sign Out</a>
+            </div>
+        </aside>
 
-        <!-- All Patients Tab -->
-        <div id="all-tab" class="tab-content active">
-            <div class="search-box">
-                <input type="text" id="searchPatient" placeholder="🔍 Search patients by name or email address...">
-            </div>
-            <div id="allPatientsList">
-                <div class="loading-pulse">Retrieving patient database...</div>
-            </div>
-        </div>
+        <!-- Main Content -->
+        <main>
+            <!-- Dashboard Overview Stats -->
+            <section id="overview-stats">
+                <header>
+                    <div class="page-title">
+                        <h1>Admin Overview</h1>
+                        <p>Real-time system statistics and metrics.</p>
+                    </div>
+                </header>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="label">Total Patients</div>
+                        <div class="value" id="totalPatients">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Medical Records</div>
+                        <div class="value" id="totalRecords">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Active Staff</div>
+                        <div class="value" id="totalStaff">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Blockchain Ops</div>
+                        <div class="value" id="totalTx">0</div>
+                    </div>
+                </div>
+            </section>
 
-        <!-- Audit Logs Tab -->
-        <div id="logs-tab" class="tab-content">
-            <div id="auditLogsList">
-                <div class="loading-pulse">Retrieving system logs...</div>
-            </div>
-        </div>
+            <!-- All Patients Tab -->
+            <section id="all-tab" class="view-section active">
+                <div class="card">
+                    <div class="search-box">
+                        <input type="text" id="searchPatient" placeholder="Search patients by name or email address...">
+                    </div>
+                    <div id="allPatientsList">
+                        <div class="loading-pulse">Retrieving patient database...</div>
+                    </div>
+                </div>
+            </section>
 
-        <!-- System Stats Tab -->
-        <div id="stats-tab" class="tab-content">
-            <div id="systemStats">
-                <div class="loading-pulse">Analyzing system health...</div>
-            </div>
-        </div>
+            <!-- Audit Logs Tab -->
+            <section id="logs-tab" class="view-section">
+                <div class="card">
+                    <h3>System Audit Logs</h3>
+                    <div id="auditLogsList" style="margin-top: 20px;">
+                        <div class="loading-pulse">Retrieving system logs...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- System Stats Tab -->
+            <section id="stats-tab" class="view-section">
+                <div class="card">
+                    <h3>Health Metrics</h3>
+                    <div id="systemStats" style="margin-top: 20px;">
+                        <div class="loading-pulse">Analyzing system health...</div>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
 
     <script>
@@ -315,10 +414,11 @@
         });
 
         function showTab(tabId) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            event.target.classList.add('active');
+            document.querySelectorAll('.view-section').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+
             document.getElementById(`${tabId}-tab`).classList.add('active');
+            document.getElementById(`nav-${tabId}`).classList.add('active');
 
             if (tabId === 'all') loadAllPatients();
             if (tabId === 'stats') loadSystemStats();
@@ -330,7 +430,8 @@
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
             const data = await response.json();
-            document.getElementById('adminEmail').textContent = data.email;
+            document.getElementById('adminEmailSidebar').textContent = data.email;
+            document.getElementById('sidebarAvatar').textContent = 'A';
         }
 
         async function loadStats() {
@@ -382,7 +483,7 @@
                                 <td>${p.email}</td>
                                 <td>${p.age || '?'}/${p.gender || '?'}</td>
                                 <td>${new Date(p.date_joined).toLocaleDateString()}</td>
-                                <td><span class="status-badge">Active</span></td>
+                                <td><span class="badge badge-active">Active</span></td>
                             </tr>
                         `).join('')}
                     </tbody>
