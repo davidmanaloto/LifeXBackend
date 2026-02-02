@@ -23,7 +23,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ('email', 'password', 'password2', 'first_name', 'last_name', 'role')
+        fields = (
+            'email', 'password', 'password2', 'first_name', 'last_name', 
+            'role', 'phone_number', 'date_of_birth', 'gender',
+            'civil_status', 'nationality', 'religion',
+            'address_line1', 'address_line2', 'city', 'state_province', 'postal_code', 'country',
+            'government_id_type', 'government_id_number',
+            'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship'
+        )
         extra_kwargs = {
             'first_name': {'required': False},
             'last_name': {'required': False},
@@ -64,14 +71,66 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 
+class PatientRegistrationSerializer(serializers.ModelSerializer):
+    """Serializer for receptionists to register patients"""
+    # Receptionists don't need to set passwords, or can set a default one
+    password = serializers.CharField(
+        write_only=True, 
+        required=False, 
+        style={'input_type': 'password'},
+        allow_blank=True
+    )
+    
+    class Meta:
+        model = User
+        fields = (
+            'email', 'password', 'first_name', 'last_name', 
+            'role', 'phone_number', 'date_of_birth', 'gender',
+            'civil_status', 'nationality', 'religion',
+            'address_line1', 'address_line2', 'city', 'state_province', 'postal_code', 'country',
+            'government_id_type', 'government_id_number',
+            'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship'
+        )
+        
+    def create(self, validated_data):
+        # Set default password if not provided
+        password = validated_data.pop('password', None)
+        
+        # Ensure role is PATIENT
+        validated_data['role'] = 'PATIENT'
+        
+        # Generate random password if not provided (they will reset via email later)
+        if not password:
+            password = User.objects.make_random_password()
+            
+        user = User.objects.create_user(
+            password=password,
+            **validated_data
+        )
+        return user
+
+
 class UserLoginSerializer(serializers.Serializer):
     """Serializer for user login"""
-    email = serializers.EmailField(required=True)
+    email = serializers.EmailField(required=False)
+    phone_number = serializers.CharField(required=False, max_length=20)
     password = serializers.CharField(
         required=True, 
         write_only=True,
         style={'input_type': 'password'}
     )
+    
+    def validate(self, attrs):
+        email = attrs.get('email')
+        phone_number = attrs.get('phone_number')
+        
+        if not email and not phone_number:
+            raise serializers.ValidationError("Must include either 'email' or 'phone_number'.")
+            
+        return attrs
+
+
+
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -84,6 +143,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'email', 'first_name', 'last_name', 'full_name',
             'role', 'is_active',
+            'civil_status', 'nationality', 'religion', 'government_id_type', 'government_id_number',
             'department', 'employee_id', 'license_number', 'specialization',
             'date_of_birth', 'age', 'gender', 'phone_number',
             'address_line1', 'address_line2', 'city', 'state_province',
@@ -110,6 +170,8 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'first_name', 'last_name', 'date_of_birth', 'gender', 
+            'civil_status', 'nationality', 'religion', 
+            'government_id_type', 'government_id_number',
             'phone_number', 'address_line1', 'address_line2', 
             'city', 'state_province', 'postal_code', 'country',
             'emergency_contact_name', 'emergency_contact_phone',

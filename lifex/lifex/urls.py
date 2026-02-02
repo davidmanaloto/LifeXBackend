@@ -18,6 +18,7 @@ urlpatterns = [
     
     # Web Interfaces
     path('login/', views.login_view, name='login'),
+    path('register/', views.register_view, name='register'),
     path('staff/', views.staff_dashboard, name='staff_dashboard'),
     path('patient/', views.patient_portal, name='patient_portal'),
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),

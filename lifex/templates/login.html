@@ -246,8 +246,8 @@
 
       <form id="loginForm">
         <div class="form-group">
-          <label for="email">Email Address</label>
-          <input type="email" id="email" placeholder="name@example.com" required>
+          <label for="loginInput">Email Address or Phone Number</label>
+          <input type="text" id="loginInput" placeholder="name@example.com or +1234567890" required>
         </div>
 
         <div class="form-group">
@@ -264,6 +264,11 @@
 
         <button type="submit" id="loginBtn" class="btn btn-primary">Sign In</button>
         <button type="button" class="btn btn-outline">Face ID or ID Scan</button>
+
+        <div style="text-align: center; margin-top: 16px; font-size: 14px; color: var(--gray-600);">
+          Don't have an account? <a href="/register/"
+            style="color: var(--primary); text-decoration: none; font-weight: 600;">Sign up</a>
+        </div>
       </form>
     </div>
   </div>
@@ -278,6 +283,7 @@
       setTimeout(() => alert.classList.remove('show'), 5000);
     }
 
+
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -285,14 +291,23 @@
       btn.disabled = true;
       btn.textContent = 'Logging in...';
 
-      const email = document.getElementById('email').value;
+      const loginInput = document.getElementById('loginInput').value;
       const password = document.getElementById('password').value;
+
+      // Determine if input is email or phone
+      const payload = {};
+      if (loginInput.includes('@')) {
+        payload.email = loginInput;
+      } else {
+        payload.phone_number = loginInput;
+      }
+      payload.password = password;
 
       try {
         const response = await fetch(`${API_BASE}/auth/login/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
+          body: JSON.stringify(payload)
         });
 
         const data = await response.json();
@@ -322,6 +337,8 @@
         btn.textContent = 'Sign In';
       }
     });
+
+
   </script>
 </body>
 

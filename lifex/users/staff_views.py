@@ -137,3 +137,23 @@ class NotificationMarkReadView(APIView):
             return Response({'message': 'Notification marked as read'}, status=status.HTTP_200_OK)
         except Notification.DoesNotExist:
             return Response({'error': 'Notification not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class PatientRegistrationView(generics.CreateAPIView):
+    """
+    Register a new patient (Receptionist access)
+    """
+    from .serializers import PatientRegistrationSerializer
+    queryset = User.objects.all()
+    serializer_class = PatientRegistrationSerializer
+    permission_classes = [IsReceptionist]
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        
+        return Response({
+            'message': 'Patient registered successfully',
+            'user': UserSerializer(user).data
+        }, status=status.HTTP_201_CREATED)

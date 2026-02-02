@@ -546,6 +546,7 @@
                 <div class="card">
                     <form id="regForm">
                         <div class="form-grid">
+                            <!-- Personal Info -->
                             <div class="form-group">
                                 <label>First Name</label>
                                 <input type="text" name="first_name" required placeholder="John">
@@ -554,14 +555,122 @@
                                 <label>Last Name</label>
                                 <input type="text" name="last_name" required placeholder="Doe">
                             </div>
+
+                            <!-- Contact Info -->
                             <div class="form-group">
                                 <label>Email Address</label>
                                 <input type="email" name="email" required placeholder="john.doe@email.com">
                             </div>
                             <div class="form-group">
-                                <label>Temporary Password</label>
-                                <input type="text" name="password" required value="Password123!">
+                                <label>Mobile Number</label>
+                                <input type="text" name="phone_number" placeholder="+63">
                             </div>
+
+                            <!-- Demographics -->
+                            <div class="form-group">
+                                <label>Date of Birth</label>
+                                <input type="date" name="date_of_birth" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Gender</label>
+                                <select name="gender">
+                                    <option value="MALE">Male</option>
+                                    <option value="FEMALE">Female</option>
+                                    <option value="OTHER">Other</option>
+                                    <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Civil Status</label>
+                                <select name="civil_status">
+                                    <option value="">Select Status</option>
+                                    <option value="SINGLE">Single</option>
+                                    <option value="MARRIED">Married</option>
+                                    <option value="WIDOWED">Widowed</option>
+                                    <option value="SEPARATED">Separated</option>
+                                    <option value="DIVORCED">Divorced</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Nationality</label>
+                                <input type="text" name="nationality" value="Filipino">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Religion</label>
+                                <input type="text" name="religion">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Temporary Password (Optional)</label>
+                                <input type="text" name="password" placeholder="Leave blank for auto-generated">
+                            </div>
+
+                            <!-- Identification -->
+                            <div class="form-group full-width"
+                                style="border-bottom: 1px solid var(--gray-200); margin-top: 10px; margin-bottom: 10px;">
+                                <h4 style="color: var(--gray-600); margin-bottom: 8px;">Government Identification</h4>
+                            </div>
+
+                            <div class="form-group">
+                                <label>ID Type</label>
+                                <select name="government_id_type">
+                                    <option value="">Select ID Type</option>
+                                    <option value="Passport">Passport</option>
+                                    <option value="National ID">National ID</option>
+                                    <option value="Drivers License">Driver's License</option>
+                                    <option value="SSS">SSS / GSIS</option>
+                                    <option value="PhilHealth">PhilHealth</option>
+                                    <option value="TIN">TIN</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>ID Number</label>
+                                <input type="text" name="government_id_number">
+                            </div>
+
+                            <!-- Address -->
+                            <div class="form-group full-width"
+                                style="border-bottom: 1px solid var(--gray-200); margin-top: 10px; margin-bottom: 10px;">
+                                <h4 style="color: var(--gray-600); margin-bottom: 8px;">Address</h4>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label>Address Line 1</label>
+                                <input type="text" name="address_line1" placeholder="House/Unit No., Street name">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Address Line 2</label>
+                                <input type="text" name="address_line2" placeholder="Building, Floor, etc.">
+                            </div>
+
+                            <div class="form-group">
+                                <label>City</label>
+                                <input type="text" name="city">
+                            </div>
+                            <div class="form-group">
+                                <label>Province</label>
+                                <input type="text" name="state_province">
+                            </div>
+
+                            <!-- Emergency Contact -->
+                            <div class="form-group full-width"
+                                style="border-bottom: 1px solid var(--gray-200); margin-top: 10px; margin-bottom: 10px;">
+                                <h4 style="color: var(--gray-600); margin-bottom: 8px;">Emergency Contact</h4>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Contact Name</label>
+                                <input type="text" name="emergency_contact_name">
+                            </div>
+                            <div class="form-group">
+                                <label>Contact Number</label>
+                                <input type="text" name="emergency_contact_phone">
+                            </div>
+
                             <div class="form-group full-width">
                                 <button type="submit" class="btn btn-primary" id="regSubmit">Register Patient
                                     Account</button>
@@ -1346,6 +1455,50 @@
                 container.innerHTML = '<p>Error search patients</p>';
             }
         }
+
+        // Patient Registration (Receptionist)
+        document.getElementById('regForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('regSubmit');
+            btn.disabled = true;
+            btn.textContent = 'Registering...';
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            // Clean up empty fields
+            Object.keys(data).forEach(key => {
+                if (data[key] === '') delete data[key];
+            });
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/receptionist/patients/register/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert('Patient registered successfully!');
+                    e.target.reset();
+                    loadPatients();
+                } else {
+                    const result = await response.json();
+                    // Show first error message
+                    const errorMsg = Object.values(result).flat()[0] || 'Registration failed';
+                    alert(errorMsg);
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert('An error occurred during registration.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Register Patient Account';
+            }
+        });
 
         async function viewPatientRecords(patientId, patientName) {
             document.getElementById('recordPatientName').textContent = `Records: ${patientName}`;

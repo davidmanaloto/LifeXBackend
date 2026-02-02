@@ -19,3 +19,7 @@ def patient_portal(request):
 def admin_dashboard(request):
     """Admin dashboard"""
     return render(request, 'admin_dashboard.html')
+
+def register_view(request):
+    """Registration page"""
+    return render(request, 'register.html')

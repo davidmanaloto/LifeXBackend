@@ -12,6 +12,7 @@ from .serializers import (
     ChangePasswordSerializer
 )
 from .permissions import IsOwnerOrAdmin, IsAdmin
+from .permissions import IsOwnerOrAdmin, IsAdmin
 
 User = get_user_model()
 
@@ -62,13 +63,32 @@ class UserLoginView(APIView):
         serializer = UserLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        email = serializer.validated_data['email'].lower().strip()
+        email = serializer.validated_data.get('email')
+        phone_number = serializer.validated_data.get('phone_number')
         password = serializer.validated_data['password'].strip()
         
-        user = authenticate(email=email, password=password)
+        user = None
         
-        if user is None:
-            user = authenticate(username=email, password=password)
+        if email:
+            email = email.lower().strip()
+            # Try email auth
+            user = authenticate(email=email, password=password)
+            if user is None:
+                user = authenticate(username=email, password=password)
+        elif phone_number:
+            # Try finding user by phone number first
+            try:
+                # We need to find the user instance to know their email/username for the authenticate method
+                # because standard Django auth backend typically expects username/email
+                user_obj = User.objects.get(phone_number=phone_number)
+                
+                # Check password manually or use authenticate if we pass the email that matches
+                # Using authenticate is safer as it handles hashing, signals etc.
+                user = authenticate(email=user_obj.email, password=password)
+                if user is None:
+                     user = authenticate(username=user_obj.email, password=password)
+            except User.DoesNotExist:
+                pass
         
         if user is None:
             return Response(

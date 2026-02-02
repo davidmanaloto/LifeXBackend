@@ -81,7 +81,26 @@ class User(AbstractBaseUser, PermissionsMixin):
         ],
         blank=True
     )
-    phone_number = models.CharField(max_length=20, blank=True)
+    phone_number = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    
+    # Personal Details
+    civil_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('SINGLE', 'Single'),
+            ('MARRIED', 'Married'),
+            ('WIDOWED', 'Widowed'),
+            ('SEPARATED', 'Separated'),
+            ('DIVORCED', 'Divorced'),
+        ],
+        blank=True
+    )
+    nationality = models.CharField(max_length=100, blank=True, default='Filipino')
+    religion = models.CharField(max_length=100, blank=True)
+    
+    # Identification
+    government_id_type = models.CharField(max_length=50, blank=True, help_text="Type of Valid Government ID")
+    government_id_number = models.CharField(max_length=50, blank=True, help_text="ID Number")
     
     # Address Information
     address_line1 = models.CharField(max_length=255, blank=True)

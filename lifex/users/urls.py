@@ -8,6 +8,7 @@ from .views import (
     ChangePasswordView,
     UserListView,
     UserAdminView,
+    UserAdminView,
 )
 from .staff_views import (
     DepartmentListView,
@@ -18,7 +19,8 @@ from .staff_views import (
     CheckInPatientView,
     CompleteAppointmentView,
     NotificationListView,
-    NotificationMarkReadView
+    NotificationMarkReadView,
+    PatientRegistrationView
 )
 
 app_name = 'users'
@@ -37,6 +39,9 @@ urlpatterns = [
     # User Management (Admin)
     path('users/', UserListView.as_view(), name='user_list'),
     path('users/<int:pk>/', UserAdminView.as_view(), name='user_admin_detail'),
+    
+    # Receptionist Tasks
+    path('receptionist/patients/register/', PatientRegistrationView.as_view(), name='receptionist_register_patient'),
     
     # Hospital structure (Receptionist)
     path('departments/', DepartmentListView.as_view(), name='department_list'),
