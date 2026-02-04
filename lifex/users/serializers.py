@@ -2,78 +2,73 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 
-from .models import Department, DoctorSchedule, ScheduleException, Appointment, Notification
+from .models import (
+    Department, DoctorSchedule, ScheduleException, 
+    Appointment, Notification, StaffInvitation
+)
 
 User = get_user_model()
 
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
-    """Serializer for user registration"""
-    password = serializers.CharField(
-        write_only=True, 
-        required=True, 
-        validators=[validate_password],
-        style={'input_type': 'password'}
-    )
-    password2 = serializers.CharField(
-        write_only=True, 
-        required=True,
-        style={'input_type': 'password'}
-    )
-    
+
+
+
+
+class StaffProvisioningSerializer(serializers.ModelSerializer):
+    """Serializer for Admins to provision new staff accounts"""
     class Meta:
         model = User
         fields = (
-            'email', 'password', 'password2', 'first_name', 'last_name', 
-            'role', 'phone_number', 'date_of_birth', 'gender',
-            'civil_status', 'nationality', 'religion',
-            'address_line1', 'address_line2', 'city', 'state_province', 'postal_code', 'country',
-            'government_id_type', 'government_id_number',
-            'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship'
+            'email', 'first_name', 'last_name', 'role', 
+            'department', 'employee_id', 'license_number', 'specialization',
+            'phone_number'
         )
         extra_kwargs = {
-            'first_name': {'required': False},
-            'last_name': {'required': False},
-            'role': {'required': False}
+            'email': {'required': True},
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+            'role': {'required': True},
         }
-    
+
     def validate(self, attrs):
-        """Validate that passwords match"""
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError(
-                {"password": "Password fields didn't match."}
-            )
+        role = attrs.get('role')
+        if role == 'PATIENT':
+            raise serializers.ValidationError("This endpoint is for staff provisioning only.")
+        
+        # Professional validation
+        if role in ['DOCTOR', 'NURSE']:
+            if not attrs.get('license_number'):
+                raise serializers.ValidationError({"license_number": f"License number is required for {role} accounts."})
+        
+        if role != 'ADMIN' and not attrs.get('department'):
+             raise serializers.ValidationError({"department": "Staff members must be assigned to a department."})
+        
         return attrs
-    
-    def validate_role(self, value):
-        """Validate role - users can only self-register as PATIENT"""
-        # Only PATIENT role is allowed for self-registration
-        # Staff roles (ADMIN, RECEPTIONIST, NURSE, DOCTOR) must be created by admin
-        if value and value in ['ADMIN', 'RECEPTIONIST', 'NURSE', 'DOCTOR']:
-            raise serializers.ValidationError(
-                "You can only register as a PATIENT. Staff accounts must be created by an administrator."
-            )
-        return value
-    
+
     def create(self, validated_data):
-        """Create user"""
-        validated_data.pop('password2')
-        password = validated_data.pop('password')
+        # Generate random password (discarded soon)
+        temp_password = User.objects.make_random_password()
         
-        # Ensure regular users get PATIENT role
-        if 'role' not in validated_data:
-            validated_data['role'] = 'PATIENT'
+        # Set staff flags - staff accounts start INACTIVE until invitation claimed
+        validated_data['is_staff'] = True
+        validated_data['is_active'] = False
         
+        if validated_data.get('role') == 'ADMIN':
+            validated_data['is_superuser'] = True
+            
         user = User.objects.create_user(
-            password=password,
+            password=temp_password,
             **validated_data
         )
+        
+        # Create invitation record
+        StaffInvitation.objects.create(user=user)
+        
         return user
 
 
 class PatientRegistrationSerializer(serializers.ModelSerializer):
     """Serializer for receptionists to register patients"""
-    # Receptionists don't need to set passwords, or can set a default one
     password = serializers.CharField(
         write_only=True, 
         required=False, 
@@ -93,13 +88,9 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
         )
         
     def create(self, validated_data):
-        # Set default password if not provided
         password = validated_data.pop('password', None)
-        
-        # Ensure role is PATIENT
         validated_data['role'] = 'PATIENT'
         
-        # Generate random password if not provided (they will reset via email later)
         if not password:
             password = User.objects.make_random_password()
             

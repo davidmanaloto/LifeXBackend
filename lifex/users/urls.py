@@ -1,14 +1,14 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
-    UserRegistrationView,
     UserLoginView,
     UserLogoutView,
     UserProfileView,
     ChangePasswordView,
     UserListView,
     UserAdminView,
-    UserAdminView,
+    StaffProvisioningView,
+    StaffActivationView,
 )
 from .staff_views import (
     DepartmentListView,
@@ -27,7 +27,6 @@ app_name = 'users'
 
 urlpatterns = [
     # Authentication
-    path('register/', UserRegistrationView.as_view(), name='register'),
     path('login/', UserLoginView.as_view(), name='login'),
     path('logout/', UserLogoutView.as_view(), name='logout'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
@@ -39,6 +38,8 @@ urlpatterns = [
     # User Management (Admin)
     path('users/', UserListView.as_view(), name='user_list'),
     path('users/<int:pk>/', UserAdminView.as_view(), name='user_admin_detail'),
+    path('admin/provision-staff/', StaffProvisioningView.as_view(), name='provision_staff'),
+    path('activate-staff/<uuid:token>/', StaffActivationView.as_view(), name='activate_staff'),
     
     # Receptionist Tasks
     path('receptionist/patients/register/', PatientRegistrationView.as_view(), name='receptionist_register_patient'),

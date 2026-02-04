@@ -5,23 +5,7 @@ from .models import MedicalRecord
 User = get_user_model()
 
 
-class PatientRegistrationSerializer(serializers.ModelSerializer):
-    """Serializer for Staff to register new patients"""
-    password = serializers.CharField(write_only=True, required=True)
-    
-    class Meta:
-        model = User
-        fields = ('email', 'password', 'first_name', 'last_name')
-    
-    def create(self, validated_data):
-        """Create patient"""
-        password = validated_data.pop('password')
-        user = User.objects.create_user(
-            password=password,
-            role='PATIENT',
-            **validated_data
-        )
-        return user
+
 
 
 class PatientListSerializer(serializers.ModelSerializer):

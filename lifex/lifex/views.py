@@ -20,6 +20,7 @@ def admin_dashboard(request):
     """Admin dashboard"""
     return render(request, 'admin_dashboard.html')
 
-def register_view(request):
-    """Registration page"""
-    return render(request, 'register.html')
+def activate_staff_view(request, token):
+    """Staff account activation page"""
+    return render(request, 'activate_staff.html', {'token': token})
+

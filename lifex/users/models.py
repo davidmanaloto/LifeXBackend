@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
+import uuid
+from datetime import timedelta
 
 
 class UserManager(BaseUserManager):
@@ -341,3 +343,25 @@ class DoctorNurseAssignment(models.Model):
     
     def __str__(self):
         return f"Dr. {self.doctor.last_name} / Nurse {self.nurse.last_name}"
+
+
+class StaffInvitation(models.Model):
+    """Temporary record of pending staff invitations"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='invitation')
+    token = models.UUIDField(default=uuid.uuid4, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_claimed = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            # Invites expire in 48 hours
+            self.expires_at = timezone.now() + timedelta(hours=48)
+        super().save(*args, **kwargs)
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    def __str__(self):
+        return f"Invite for {self.user.email}"

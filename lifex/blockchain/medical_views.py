@@ -8,12 +8,12 @@ from django.db.models import Q
 
 from .models import MedicalRecord, BlockchainTransaction, AuditLog
 from .medical_serializers import (
-    PatientRegistrationSerializer,
     PatientListSerializer,
     MedicalRecordUploadSerializer,
     MedicalRecordSerializer,
     AuditLogSerializer
 )
+from users.serializers import PatientRegistrationSerializer
 from .permissions import (
     IsNurse, 
     IsPatient, 

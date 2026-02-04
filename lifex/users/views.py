@@ -4,15 +4,17 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.password_validation import validate_password
 from .serializers import (
-    UserRegistrationSerializer,
     UserLoginSerializer,
     UserSerializer,
     UserUpdateSerializer,
-    ChangePasswordSerializer
+    ChangePasswordSerializer,
+    StaffProvisioningSerializer
 )
 from .permissions import IsOwnerOrAdmin, IsAdmin
-from .permissions import IsOwnerOrAdmin, IsAdmin
+from .utils import send_staff_invitation_email
+from .models import StaffInvitation
 
 User = get_user_model()
 
@@ -26,30 +28,84 @@ class UserAdminView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'pk'
 
 
-class UserRegistrationView(generics.CreateAPIView):
+class StaffProvisioningView(generics.CreateAPIView):
     """
-    Register a new user account
+    Provision a new staff member (Admin access)
     """
     queryset = User.objects.all()
-    serializer_class = UserRegistrationSerializer
-    permission_classes = [permissions.AllowAny]
-    
+    serializer_class = StaffProvisioningSerializer
+    permission_classes = [IsAdmin]
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         
-        # Generate tokens for the new user
-        refresh = RefreshToken.for_user(user)
+        # Invitation and Email (Access user.invitation which was created in serializer)
+        invitation = user.invitation
+        email_sent = send_staff_invitation_email(invitation, request)
         
         return Response({
-            'message': 'User registered successfully',
+            'message': f'Staff account for {user.get_full_name()} provisioned successfully',
             'user': UserSerializer(user).data,
-            'tokens': {
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }
+            'invitation_token': str(invitation.token),
+            'email_status': 'Sent' if email_sent else 'Failed to send'
         }, status=status.HTTP_201_CREATED)
+
+
+class StaffActivationView(APIView):
+    """
+    Handle staff account activation/claiming
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, token):
+        try:
+            invite = StaffInvitation.objects.get(token=token, is_claimed=False)
+            if invite.is_expired:
+                return Response({'error': 'Invitation has expired'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response({
+                'email': invite.user.email,
+                'name': invite.user.get_full_name(),
+                'role': invite.user.role
+            })
+        except StaffInvitation.DoesNotExist:
+            return Response({'error': 'Invalid invitation token'}, status=status.HTTP_404_NOT_FOUND)
+
+    def post(self, request, token):
+        try:
+            invite = StaffInvitation.objects.get(token=token, is_claimed=False)
+            if invite.is_expired:
+                return Response({'error': 'Invitation has expired'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            password = request.data.get('password')
+            if not password:
+                return Response({'error': 'Password is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                validate_password(password, invite.user)
+            except Exception as e:
+                return Response({'error': list(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Activate user
+            user = invite.user
+            user.set_password(password)
+            user.is_active = True
+            user.save()
+            
+            # Claim invite
+            invite.is_claimed = True
+            invite.save()
+            
+            return Response({'message': 'Account activated successfully. You can now log in.'})
+            
+        except StaffInvitation.DoesNotExist:
+            return Response({'error': 'Invalid invitation token'}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
 
 
 class UserLoginView(APIView):

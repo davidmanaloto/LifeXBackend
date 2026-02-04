@@ -1,61 +1,54 @@
-import pyotp
+import logging
 from django.core.mail import send_mail
 from django.conf import settings
-from twilio.rest import Client
-import logging
+from django.utils import timezone
+from django.urls import reverse
 
 logger = logging.getLogger(__name__)
 
-def generate_otp(user):
+def send_staff_invitation_email(invitation, request=None):
     """
-    Generate a 6-digit OTP for the user
+    Send an invitation email to a newly provisioned staff member.
     """
-    if not user.otp_base32:
-        user.otp_base32 = pyotp.random_base32()
-        user.save()
+    user = invitation.user
+    token = invitation.token
     
-    totp = pyotp.TOTP(user.otp_base32, interval=300) # 5 minutes expiry
-    return totp.now()
-
-def send_otp_email(user, otp):
-    """
-    Send OTP via email
-    """
-    subject = 'Your LifeX Verification Code'
-    message = f'Hi {user.first_name or "there"},\n\nYour verification code is: {otp}\n\nThis code will expire in 5 minutes.\n\nIf you did not request this code, please secure your account.'
-    email_from = settings.DEFAULT_FROM_EMAIL
-    recipient_list = [user.email]
-    
-    return send_mail(subject, message, email_from, recipient_list)
-
-def send_otp_sms(user, otp):
-    """
-    Send OTP via SMS using Twilio
-    """
-    if not user.phone_number:
-        logger.error(f"User {user.email} has no phone number for SMS OTP")
-        return False
+    # Construct activation URL
+    # In production, use the actual domain. For dev, we use localhost/base URL.
+    if request:
+        base_url = f"{request.scheme}://{request.get_host()}"
+    else:
+        base_url = "http://localhost:8000" # Fallback
         
+    activation_url = f"{base_url}/activate-staff/{token}/"
+    
+    subject = "Welcome to the LifeX Medical Team - Account Activation"
+    message = f"""
+    Hi {user.first_name},
+
+    An account has been provisioned for you on LifeX as a {user.role}.
+    
+    To activate your account and set your password, please click the link below:
+    {activation_url}
+    
+    Note: This link will expire in 48 hours.
+    
+    If you did not expect this, please ignore this email.
+    
+    Regards,
+    The LifeX Team
+    """
+    
     try:
-        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-        message = client.messages.create(
-            body=f"Your LifeX security code is: {otp}. Valid for 5 minutes.",
-            from_=settings.TWILIO_PHONE_NUMBER,
-            to=user.phone_number
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
         )
+        logger.info(f"Invitation email sent to {user.email}")
         return True
     except Exception as e:
-        logger.error(f"Error sending SMS to {user.phone_number}: {e}")
-        # For development purposes, print it if twilio fails or isn't configured
-        print(f"DEBUG: SMS OTP for {user.phone_number}: {otp} (Twilio failed: {e})")
+        logger.error(f"Failed to send invitation email to {user.email}: {e}")
         return False
-
-def verify_otp(user, otp):
-    """
-    Verify the provided OTP
-    """
-    if not user.otp_base32:
-        return False
-    
-    totp = pyotp.TOTP(user.otp_base32, interval=300)
-    return totp.verify(otp)

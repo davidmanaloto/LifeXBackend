@@ -1210,9 +1210,18 @@
                     e.target.reset();
                     showTab('dashboard');
                     loadStats();
+                    if (typeof loadPatientsTable === 'function') loadPatientsTable();
                 } else {
-                    const error = await response.json();
-                    alert('Error: ' + JSON.stringify(error));
+                    const errorData = await response.json();
+                    let errorMsg = 'Registration failed: ';
+                    if (typeof errorData === 'object') {
+                        // Extract first error from the object (common for DRF 400 responses)
+                        const firstError = Object.values(errorData).flat()[0];
+                        errorMsg += firstError || JSON.stringify(errorData);
+                    } else {
+                        errorMsg += 'Unknown error';
+                    }
+                    alert(errorMsg);
                 }
             } catch (err) {
                 alert('Connection error');
@@ -1456,49 +1465,6 @@
             }
         }
 
-        // Patient Registration (Receptionist)
-        document.getElementById('regForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('regSubmit');
-            btn.disabled = true;
-            btn.textContent = 'Registering...';
-
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-
-            // Clean up empty fields
-            Object.keys(data).forEach(key => {
-                if (data[key] === '') delete data[key];
-            });
-
-            try {
-                const response = await fetch(`${API_BASE}/auth/receptionist/patients/register/`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (response.ok) {
-                    alert('Patient registered successfully!');
-                    e.target.reset();
-                    loadPatients();
-                } else {
-                    const result = await response.json();
-                    // Show first error message
-                    const errorMsg = Object.values(result).flat()[0] || 'Registration failed';
-                    alert(errorMsg);
-                }
-            } catch (error) {
-                console.error('Registration error:', error);
-                alert('An error occurred during registration.');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Register Patient Account';
-            }
-        });
 
         async function viewPatientRecords(patientId, patientName) {
             document.getElementById('recordPatientName').textContent = `Records: ${patientName}`;

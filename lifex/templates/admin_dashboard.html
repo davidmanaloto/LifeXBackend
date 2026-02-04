@@ -251,6 +251,11 @@
             color: #065F46;
         }
 
+        .badge-pending {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
         .search-box {
             margin-bottom: 24px;
         }
@@ -312,6 +317,10 @@
                     <span>📜</span>
                     <span>Audit Logs</span>
                 </div>
+                <div class="nav-item" id="nav-staff" onclick="showTab('staff')">
+                    <span>🏥</span>
+                    <span>Staff Management</span>
+                </div>
                 <div class="nav-item" id="nav-stats" onclick="showTab('stats')">
                     <span>📈</span>
                     <span>System Health</span>
@@ -372,6 +381,123 @@
                 </div>
             </section>
 
+            <!-- Staff Management Tab -->
+            <section id="staff-tab" class="view-section">
+                <!-- Provisioning Form -->
+                <div class="card" id="provisioningFormCard" style="display: none; margin-bottom: 24px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--primary);">Provision New Staff Member</h3>
+                        <button class="btn" onclick="toggleProvisioningForm()"
+                            style="background: var(--gray-100); color: var(--gray-600); border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Cancel</button>
+                    </div>
+                    <form id="provisioningForm">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label
+                                    style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">First
+                                    Name</label>
+                                <input type="text" name="first_name" required
+                                    style="width: 100%; padding: 10px; border: 1px solid var(--gray-200); border-radius: 8px;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label
+                                    style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Last
+                                    Name</label>
+                                <input type="text" name="last_name" required
+                                    style="width: 100%; padding: 10px; border: 1px solid var(--gray-200); border-radius: 8px;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label
+                                    style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Email
+                                    Address</label>
+                                <input type="email" name="email" required
+                                    style="width: 100%; padding: 10px; border: 1px solid var(--gray-200); border-radius: 8px;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label
+                                    style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Role</label>
+                                <select name="role" id="staffRoleSelect" required
+                                    onchange="handleRoleChange(this.value)"
+                                    style="width: 100%; padding: 10px; border: 1px solid var(--gray-200); border-radius: 8px;">
+                                    <option value="">-- Select Role --</option>
+                                    <option value="DOCTOR">Doctor</option>
+                                    <option value="NURSE">Nurse</option>
+                                    <option value="RECEPTIONIST">Receptionist</option>
+                                    <option value="ADMIN">Administrator</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="deptField" style="margin-bottom: 15px;">
+                                <label
+                                    style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Department</label>
+                                <select name="department" id="staffDeptSelect"
+                                    style="width: 100%; padding: 10px; border: 1px solid var(--gray-200); border-radius: 8px;">
+                                    <option value="">-- Loading --</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label
+                                    style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Employee
+                                    ID</label>
+                                <input type="text" name="employee_id"
+                                    style="width: 100%; padding: 10px; border: 1px solid var(--gray-200); border-radius: 8px;">
+                            </div>
+                            <div class="form-group" id="licenseField" style="display: none; margin-bottom: 15px;">
+                                <label
+                                    style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">License
+                                    Number</label>
+                                <input type="text" name="license_number"
+                                    style="width: 100%; padding: 10px; border: 1px solid var(--gray-200); border-radius: 8px;">
+                            </div>
+                            <div class="form-group" id="specializationField"
+                                style="display: none; margin-bottom: 15px;">
+                                <label
+                                    style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Specialization</label>
+                                <input type="text" name="specialization"
+                                    style="width: 100%; padding: 10px; border: 1px solid var(--gray-200); border-radius: 8px;">
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <button type="submit" id="provisionBtn"
+                                    style="width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s;">Provision
+                                    Staff Account</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Invite Modal (Post-Creation) -->
+                <div id="credentialModal" class="card"
+                    style="display: none; border: 2px solid var(--secondary); background: #f0fdf4; margin-bottom: 24px;">
+                    <h3 style="color: var(--secondary); margin-bottom: 10px;">✅ Invitation Created</h3>
+                    <p style="font-size: 14px; margin-bottom: 15px;">A secure invitation email has been queued for the
+                        employee. You can also share the <strong>Activation Link</strong> manually below.</p>
+                    <div style="background: white; padding: 20px; border-radius: 10px; border: 1px solid #d1fae5;">
+                        <div style="margin-bottom: 10px;">Email: <strong id="newStaffEmail"></strong></div>
+                        <div style="margin-bottom: 10px;">Email Status: <strong id="emailStatus"
+                                style="color: var(--primary);"></strong></div>
+                        <div>Invite Link: <input type="text" id="newStaffInviteLink" readonly onclick="this.select()"
+                                style="width: 100%; margin-top: 5px; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--gray-200); font-family: monospace; font-size: 12px;">
+                        </div>
+                    </div>
+                    <button class="btn" onclick="closeCredentialModal()"
+                        style="margin-top: 20px; background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Got
+                        it, I've saved the credentials</button>
+                </div>
+
+                <div class="card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h3 style="margin: 0;">Active Hospital Staff</h3>
+                        <button class="btn" onclick="toggleProvisioningForm()"
+                            style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">+
+                            Provision New Staff</button>
+                    </div>
+                    <div id="staffList">
+                        <div class="loading-pulse">Retrieving staff directory...</div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Audit Logs Tab -->
             <section id="logs-tab" class="view-section">
                 <div class="card">
@@ -421,8 +547,138 @@
             document.getElementById(`nav-${tabId}`).classList.add('active');
 
             if (tabId === 'all') loadAllPatients();
+            if (tabId === 'staff') loadStaffDirectory();
             if (tabId === 'stats') loadSystemStats();
             if (tabId === 'logs') loadAuditLogs();
+        }
+
+        // Provisioning logic
+        function toggleProvisioningForm() {
+            const form = document.getElementById('provisioningFormCard');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            if (form.style.display === 'block') {
+                loadDepartments();
+            }
+        }
+
+        function handleRoleChange(role) {
+            const licenseField = document.getElementById('licenseField');
+            const specializationField = document.getElementById('specializationField');
+            const deptField = document.getElementById('deptField');
+
+            if (role === 'DOCTOR' || role === 'NURSE') {
+                licenseField.style.display = 'block';
+                deptField.style.display = 'block';
+                specializationField.style.display = (role === 'DOCTOR') ? 'block' : 'none';
+            } else if (role === 'ADMIN') {
+                licenseField.style.display = 'none';
+                deptField.style.display = 'none';
+                specializationField.style.display = 'none';
+            } else {
+                licenseField.style.display = 'none';
+                deptField.style.display = 'block';
+                specializationField.style.display = 'none';
+            }
+        }
+
+        async function loadDepartments() {
+            const select = document.getElementById('staffDeptSelect');
+            try {
+                const response = await fetch(`${API_BASE}/auth/departments/`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const depts = await response.json();
+                select.innerHTML = '<option value="">-- Choose Department --</option>' +
+                    depts.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+            } catch (err) { console.error(err); }
+        }
+
+        async function loadStaffDirectory() {
+            const container = document.getElementById('staffList');
+            try {
+                const response = await fetch(`${API_BASE}/auth/users/`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const users = await response.json();
+                const staff = users.filter(u => u.role !== 'PATIENT');
+
+                if (staff.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--gray-600); padding: 40px;">No staff accounts found.</p>';
+                    return;
+                }
+
+                container.innerHTML = `<table>
+                    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Dept</th><th>Status</th></tr></thead>
+                    <tbody>
+                        ${staff.map(s => `
+                            <tr>
+                                <td style="font-weight: 600;">${s.full_name || 'N/A'}</td>
+                                <td>${s.email}</td>
+                                <td><span class="badge" style="background:#f1f5f9; color:#475569;">${s.role}</span></td>
+                                <td>${s.department_name || '-'}</td>
+                                <td><span class="badge ${s.is_active ? 'badge-active' : 'badge-pending'}">${s.is_active ? 'ACTIVE' : 'PENDING'}</span></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+            } catch (err) { container.innerHTML = 'Error loading staff directory'; }
+        }
+
+        document.getElementById('provisioningForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('provisionBtn');
+            btn.disabled = true;
+            btn.textContent = 'Provisioning...';
+
+            const formData = new FormData(e.target);
+            const payload = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/admin/provision-staff/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    document.getElementById('newStaffEmail').textContent = data.user.email;
+                    document.getElementById('emailStatus').textContent = data.email_status;
+
+                    const inviteUrl = `${window.location.origin}/activate-staff/${data.invitation_token}/`;
+                    document.getElementById('newStaffInviteLink').value = inviteUrl;
+
+                    document.getElementById('credentialModal').style.display = 'block';
+
+                    e.target.reset();
+                    toggleProvisioningForm();
+                    loadStaffDirectory();
+                } else {
+                    const err = await response.json();
+                    let errMsg = 'Provisioning failed:\n';
+                    if (typeof err === 'object') {
+                        for (const field in err) {
+                            errMsg += `- ${field}: ${err[field]}\n`;
+                        }
+                    } else {
+                        errMsg += err;
+                    }
+                    alert(errMsg);
+                }
+            } catch (err) {
+                alert('Connection error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Provision Staff Account';
+            }
+        });
+
+        function closeCredentialModal() {
+            document.getElementById('credentialModal').style.display = 'none';
         }
 
         async function loadAdminInfo() {

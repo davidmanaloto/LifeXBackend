@@ -14102,10 +14102,16 @@
       "links": {},
       "address": "0xfC7B3bBbb643e7182D2c2d79474960300Ef229CD",
       "transactionHash": "0x6b193e6a0c912d872d3c405a74c4082d5a59d4cca60e7ac877be0a6e65859e59"
+    },
+    "1770026694036": {
+      "events": {},
+      "links": {},
+      "address": "0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab",
+      "transactionHash": "0xc060eb597b03d95145234c1be5eca81c75729dfa326ea221f2b1117f16f622bf"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2026-01-15T01:27:54.070Z",
+  "updatedAt": "2026-02-02T10:05:18.633Z",
   "networkType": "ethereum",
   "devdoc": {
     "details": "Smart contract for storing document hashes on blockchain  BLOCKCHAIN BASICS: - This contract runs on the Ethereum blockchain (Ganache in our case) - Once data is written, it CANNOT be changed or deleted (immutable) - Every transaction costs \"gas\" (fake ETH on Ganache) - Anyone can read data, but only authorized users can write",

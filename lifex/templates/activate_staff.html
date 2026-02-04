@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activate Your Account - LifeX</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #eef2ff;
+            --secondary: #10B981;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --dark: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dark);
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .logo svg {
+            width: 35px;
+            height: 35px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        p.subtitle {
+            color: var(--gray-500);
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: var(--primary-light);
+            border: 1px solid var(--primary-200);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .info-card div {
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .info-card strong {
+            color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--gray-700);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 10px;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            background: var(--gray-200);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            color: var(--danger);
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-state {
+            display: none;
+        }
+
+        .success-icon {
+            width: 60px;
+            height: 60px;
+            background: #d1fae5;
+            color: #059669;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 30px;
+        }
+
+        #loadingState {
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--primary);
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="24" height="24" rx="6" fill="#4F46E5" />
+                <path d="M12 7V17M7 12H17" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+            </svg>
+            LifeX
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState">
+            <div class="spinner"></div>
+            <p>Verifying invitation...</p>
+        </div>
+
+        <!-- Activation Form -->
+        <div id="activationForm" style="display: none;">
+            <h1>Activate Account</h1>
+            <p class="subtitle">Complete your registration by setting a secure password.</p>
+
+            <div class="info-card">
+                <div>Email: <strong id="userEmail"></strong></div>
+                <div>Role: <strong id="userRole"></strong></div>
+            </div>
+
+            <div id="formError" class="error-message"></div>
+
+            <form id="claimForm">
+                <div class="form-group">
+                    <label>Set New Password</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="confirmPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" id="submitBtn" class="btn btn-primary">Activate Account</button>
+            </form>
+        </div>
+
+        <!-- Success State -->
+        <div id="successState" class="success-state">
+            <div class="success-icon">✓</div>
+            <h1>Activation Complete!</h1>
+            <p class="subtitle" style="margin-bottom: 20px;">Your staff account is now active. You can log in using your
+                email and the password you just set.</p>
+            <a href="/login/" class="btn btn-primary" style="text-decoration: none; display: block;">Go to Login</a>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" style="display: none;">
+            <div style="font-size: 50px; color: var(--danger); margin-bottom: 20px;">⚠</div>
+            <h1 id="errorTitle">Invalid Link</h1>
+            <p id="errorDesc" class="subtitle">This invitation link is invalid or has already been used.</p>
+            <a href="/" class="btn btn-primary" style="text-decoration: none; display: block;">Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        const token = "{{ token }}";
+        const API_BASE = '/api/auth';
+
+        async function init() {
+            try {
+                const response = await fetch(`${API_BASE}/activate-staff/${token}/`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('activationForm').style.display = 'block';
+                    document.getElementById('userEmail').textContent = data.email;
+                    document.getElementById('userRole').textContent = data.role;
+                } else {
+                    showError(data.error);
+                }
+            } catch (err) {
+                showError('Could not verify invitation. Please check your connection.');
+            }
+        }
+
+        function showError(msg) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('errorDesc').textContent = msg || 'There was an issue processing your request.';
+        }
+
+        document.getElementById('claimForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const btn = document.getElementById('submitBtn');
+            const errorDiv = document.getElementById('formError');
+
+            if (password !== confirm) {
+                errorDiv.textContent = "Passwords do not match.";
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/activate-staff/${token}/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('activationForm').style.display = 'none';
+                    document.getElementById('successState').style.display = 'block';
+                } else {
+                    let msg = data.error;
+                    if (Array.isArray(msg)) msg = msg[0];
+                    errorDiv.textContent = msg || 'Activation failed.';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                errorDiv.textContent = "Connection error. Please try again.";
+                errorDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Activate Account';
+            }
+        });
+
+        init();
+    </script>
+</body>
+
+</html>
