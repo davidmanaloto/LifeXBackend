@@ -108,6 +108,8 @@ class StaffActivationView(APIView):
 
 
 
+from drf_spectacular.utils import extend_schema, OpenApiResponse
+
 class UserLoginView(APIView):
     """
     Login user and return JWT tokens
@@ -115,6 +117,15 @@ class UserLoginView(APIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = UserLoginSerializer
     
+    @extend_schema(
+        summary="User Authentication",
+        description="Authenticate user with email/phone and password to receive JWT tokens.",
+        responses={
+            200: OpenApiResponse(description="Login successful"),
+            401: OpenApiResponse(description="Invalid credentials"),
+            403: OpenApiResponse(description="Account locked or disabled")
+        }
+    )
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -125,6 +136,26 @@ class UserLoginView(APIView):
         
         user = None
         
+        # Check if user is locked out before attempting auth
+        temp_user = None
+        if email:
+            temp_user = User.objects.filter(email=email.lower().strip()).first()
+        elif phone_number:
+            temp_user = User.objects.filter(phone_number=phone_number).first()
+            
+        if temp_user and temp_user.failed_login_attempts >= 5:
+            # Check if 15 minutes have passed since last failure
+            if temp_user.last_failed_login and (timezone.now() - temp_user.last_failed_login).total_seconds() < 900:
+                remaining = int(15 - (timezone.now() - temp_user.last_failed_login).total_seconds() / 60)
+                return Response(
+                    {'error': f'Account locked due to too many failed attempts. Try again in {remaining} minutes.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            else:
+                # Reset attempts if timeout passed
+                temp_user.failed_login_attempts = 0
+                temp_user.save()
+
         if email:
             email = email.lower().strip()
             # Try email auth
@@ -134,21 +165,56 @@ class UserLoginView(APIView):
         elif phone_number:
             # Try finding user by phone number first
             try:
-                # We need to find the user instance to know their email/username for the authenticate method
-                # because standard Django auth backend typically expects username/email
-                user_obj = User.objects.get(phone_number=phone_number)
+                # Try direct lookup first (for unencrypted records)
+                user_obj = User.objects.filter(phone_number=phone_number).first()
+                if not user_obj:
+                    # Try hash lookup (for encrypted records)
+                    import hashlib
+                    pn_hash = hashlib.sha256(phone_number.strip().encode()).hexdigest()
+                    user_obj = User.objects.filter(phone_number_hash=pn_hash).first()
                 
-                # Check password manually or use authenticate if we pass the email that matches
-                # Using authenticate is safer as it handles hashing, signals etc.
-                user = authenticate(email=user_obj.email, password=password)
-                if user is None:
-                     user = authenticate(username=user_obj.email, password=password)
-            except User.DoesNotExist:
+                if user_obj:
+                    user = authenticate(email=user_obj.email, password=password)
+                    if user is None:
+                         user = authenticate(username=user_obj.email, password=password)
+            except Exception:
                 pass
         
         if user is None:
+            # Record failed attempt if user exists
+            error_message = 'Invalid credentials'
+            if temp_user:
+                temp_user.failed_login_attempts += 1
+                temp_user.last_failed_login = timezone.now()
+                temp_user.save()
+                
+                # Log lockout if it just happened
+                if temp_user.failed_login_attempts == 5:
+                    from blockchain.models import AuditLog
+                    ip_address = '0.0.0.0'
+                    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+                    if x_forwarded_for:
+                        ip_address = x_forwarded_for.split(',')[0]
+                    else:
+                        ip_address = request.META.get('REMOTE_ADDR')
+                        
+                    AuditLog.objects.create(
+                        user=None, # User is not logged in
+                        action='ACCOUNT_LOCKOUT',
+                        resource_type='USER',
+                        resource_id=str(temp_user.id),
+                        details=f"Account locked for {temp_user.email} after 5 failed attempts.",
+                        ip_address=ip_address
+                    )
+                
+                # Warn if close to lockout
+                if temp_user.failed_login_attempts >= 3:
+                    remaining_attempts = 5 - temp_user.failed_login_attempts
+                    if remaining_attempts > 0:
+                        error_message = f'Invalid credentials. Warning: {remaining_attempts} attempts remaining before account lockout.'
+            
             return Response(
-                {'error': 'Invalid credentials'},
+                {'error': error_message},
                 status=status.HTTP_401_UNAUTHORIZED
             )
         
@@ -157,6 +223,11 @@ class UserLoginView(APIView):
                 {'error': 'Account is disabled'},
                 status=status.HTTP_403_FORBIDDEN
             )
+        
+        # Success - reset attempts
+        user.failed_login_attempts = 0
+        user.last_failed_login = None
+        user.save()
         
         # Generate tokens
         refresh = RefreshToken.for_user(user)
@@ -229,9 +300,17 @@ class ChangePasswordView(APIView):
         )
         serializer.is_valid(raise_exception=True)
         
+        # Save old password to history
+        from .models import PasswordHistory
+        PasswordHistory.objects.create(
+            user=request.user,
+            password_hash=request.user.password
+        )
+        
         # Set new password
         user = request.user
         user.set_password(serializer.validated_data['new_password'])
+        user.must_change_password = False
         user.save()
         
         return Response(

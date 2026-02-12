@@ -2,6 +2,22 @@
 
 LifeX is a secure, decentralized platform for managing medical records using blockchain technology. It ensures data integrity and provides a transparent audit trail for all medical activities.
 
+## ✨ Key Features
+
+- **Blockchain-Verified Records**: Immutable storage of medical record hashes for integrity verification.
+- **Secure Authentication**: JWT-based auth with token rotation and blacklisting.
+- **Role-Based Access Control (RBAC)**: Fine-grained permissions for Admins, Staff, and Patients.
+- **Dynamic Frontend**: Modern UI with glassmorphism and real-time validation.
+
+## 🛡️ Security & Resilience
+
+- **Global Exception Handling**: Standardized API error responses for better security and debugging.
+- **Automated Auditing**: Middleware-driven logging of all data modification attempts.
+- **Account Lockout**: Protection against brute-force attacks (5 attempts, 15-minute cooldown).
+- **Password History**: Prevention of password reuse (checks last 3 passwords).
+- **Data Masking**: Automatic masking of sensitive fields (PII) for unauthorized viewers.
+- **Field-Level Encryption**: Sensitive medical notes are encrypted at rest using AES-256 (Fernet).
+
 ## 🚀 How to Run the Project
 
 ### 1. Prerequisites
@@ -77,6 +93,18 @@ When a Patient or Doctor views a record:
 - **Doctors**: Authorized to view verified records and verify them on-chain.
 - **Patients**: Can view their own verified history and prove ownership of their data.
 - **Receptionists**: Manage the administrative flow leading up to medical documentation.
+
+---
+
+## 🔒 Data Encryption (Confidentiality)
+
+While blockchain provides integrity, LifeX uses **AES-128 Encryption** (via Fernet) to ensure patient confidentiality.
+
+- **Sensitive Fields**: Descriptions and Department names are encrypted before being stored in the database.
+- **Key Management**: Uses a unique `ENCRYPTION_KEY` stored in the project's environment variables.
+- **Decryption**: Authorized users see decrypted data automatically via the API, while the physical database only contains encrypted "cipher-text."
+
+For more details, see [ENCRYPTION_GUIDE.md](./ENCRYPTION_GUIDE.md).
 
 ---
 *Built with Django, Web3.py, and Solidity.*

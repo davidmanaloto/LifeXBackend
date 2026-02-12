@@ -516,7 +516,11 @@
                     </div>
                     <div>
                         <button class="btn btn-outline" onclick="toggleNotifications()">
-                            🔔 <span id="notifCount" class="badge badge-pending hidden">0</span>
+                            <svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;"
+                                viewBox="0 0 24 24">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                            </svg> <span id="notifCount" class="badge badge-pending hidden">0</span>
                         </button>
                     </div>
                 </header>
@@ -543,6 +547,34 @@
                         <p>Enroll a new patient. Accounts are automatically activated upon creation.</p>
                     </div>
                 </header>
+
+                <div id="registrationSuccess" class="card"
+                    style="display: none; border: 2px solid var(--secondary); background: #f0fdf4; margin-bottom: 24px;">
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <div style="font-size: 24px;"><svg
+                                style="width:24px;height:24px;stroke:#10B981;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"
+                                viewBox="0 0 24 24">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
+                            </svg></div>
+                        <div>
+                            <h3 style="color: var(--secondary); margin-bottom: 5px;">Patient Registered Successfully
+                            </h3>
+                            <p style="font-size: 14px; margin-bottom: 15px;">Please provide the following login
+                                credentials to the patient:</p>
+                            <div
+                                style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #d1fae5;">
+                                <div style="margin-bottom: 5px;">Email: <strong id="regSuccessEmail"></strong></div>
+                                <div>Password: <strong id="regSuccessPassword"
+                                        style="font-family: monospace; font-size: 16px; color: var(--primary);"></strong>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline"
+                                onclick="this.parentElement.parentElement.parentElement.style.display='none'"
+                                style="margin-top: 15px; padding: 8px 16px; font-size: 12px;">Dismiss</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="card">
                     <form id="regForm">
                         <div class="form-grid">
@@ -573,7 +605,8 @@
                             </div>
                             <div class="form-group">
                                 <label>Gender</label>
-                                <select name="gender">
+                                <select name="gender" required>
+                                    <option value="">Select Gender</option>
                                     <option value="MALE">Male</option>
                                     <option value="FEMALE">Female</option>
                                     <option value="OTHER">Other</option>
@@ -583,7 +616,7 @@
 
                             <div class="form-group">
                                 <label>Civil Status</label>
-                                <select name="civil_status">
+                                <select name="civil_status" required>
                                     <option value="">Select Status</option>
                                     <option value="SINGLE">Single</option>
                                     <option value="MARRIED">Married</option>
@@ -616,7 +649,7 @@
 
                             <div class="form-group">
                                 <label>ID Type</label>
-                                <select name="government_id_type">
+                                <select name="government_id_type" required>
                                     <option value="">Select ID Type</option>
                                     <option value="Passport">Passport</option>
                                     <option value="National ID">National ID</option>
@@ -629,7 +662,7 @@
                             </div>
                             <div class="form-group">
                                 <label>ID Number</label>
-                                <input type="text" name="government_id_number">
+                                <input type="text" name="government_id_number" required>
                             </div>
 
                             <!-- Address -->
@@ -640,7 +673,8 @@
 
                             <div class="form-group full-width">
                                 <label>Address Line 1</label>
-                                <input type="text" name="address_line1" placeholder="House/Unit No., Street name">
+                                <input type="text" name="address_line1" required
+                                    placeholder="House/Unit No., Street name">
                             </div>
                             <div class="form-group full-width">
                                 <label>Address Line 2</label>
@@ -649,11 +683,11 @@
 
                             <div class="form-group">
                                 <label>City</label>
-                                <input type="text" name="city">
+                                <input type="text" name="city" required>
                             </div>
                             <div class="form-group">
                                 <label>Province</label>
-                                <input type="text" name="state_province">
+                                <input type="text" name="state_province" required>
                             </div>
 
                             <!-- Emergency Contact -->
@@ -872,8 +906,12 @@
                                 <input type="date" name="date_of_service" required>
                             </div>
                             <div class="form-group">
-                                <label>File Attachment (PDF, Image)</label>
-                                <input type="file" name="document_file" required>
+                                <label>File Attachment (PDF, Image - Max 25MB)</label>
+                                <input type="file" name="document_file" id="recordFileInput"
+                                    accept=".pdf,.jpg,.jpeg,.png,.gif" required>
+                                <p id="fileError"
+                                    style="color: var(--danger); font-size: 11px; margin-top: 5px; display: none;">File
+                                    must be a PDF or Image and under 25MB.</p>
                             </div>
                             <div class="form-group full-width">
                                 <button type="submit" class="btn btn-primary" id="uploadSubmit">Blockchain Upload &
@@ -905,27 +943,27 @@
         // Navigation Data based on Roles
         const navConfig = {
             'ADMIN': [
-                { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-                { id: 'accounts', label: 'Manage Accounts', icon: '🔐' },
-                { id: 'patients', label: 'Patients', icon: '👥' }
+                { id: 'dashboard', label: 'Dashboard', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
+                { id: 'accounts', label: 'Manage Accounts', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' },
+                { id: 'patients', label: 'Patients', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' }
             ],
             'RECEPTIONIST': [
-                { id: 'dashboard', label: 'Overview', icon: '🏠' },
-                { id: 'registration', label: 'Register Patient', icon: '📝' },
-                { id: 'appointments', label: 'Appointments', icon: '📅' },
-                { id: 'patients', label: 'Patient Directory', icon: '🔍' }
+                { id: 'dashboard', label: 'Overview', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' },
+                { id: 'registration', label: 'Register Patient', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>' },
+                { id: 'appointments', label: 'Appointments', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' },
+                { id: 'patients', label: 'Patient Directory', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' }
             ],
             'NURSE': [
-                { id: 'dashboard', label: 'Overview', icon: '🏠' },
-                { id: 'appointments', label: 'Doctor Schedule', icon: '📅' },
-                { id: 'upload', label: 'Upload Record', icon: '📤' },
-                { id: 'patients', label: 'Patient List', icon: '👥' }
+                { id: 'dashboard', label: 'Overview', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' },
+                { id: 'appointments', label: 'Doctor Schedule', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' },
+                { id: 'upload', label: 'Upload Record', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' },
+                { id: 'patients', label: 'Patient List', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' }
             ],
             'DOCTOR': [
-                { id: 'dashboard', label: 'My Schedule', icon: '📅' },
-                { id: 'calendar', label: 'Calendar View', icon: '🗓️' },
-                { id: 'appointments', label: 'Appointments List', icon: '👨‍⚕️' },
-                { id: 'patients', label: 'Patient Search', icon: '🔍' }
+                { id: 'dashboard', label: 'My Schedule', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' },
+                { id: 'calendar', label: 'Calendar View', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14.01"/><line x1="12" y1="14" x2="12" y2="14.01"/><line x1="16" y1="14" x2="16" y2="14.01"/></svg>' },
+                { id: 'appointments', label: 'Appointments List', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' },
+                { id: 'patients', label: 'Patient Search', icon: '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' }
             ]
         };
 
@@ -1206,22 +1244,28 @@
                 });
 
                 if (response.ok) {
-                    alert('Patient registered and activated successfully!');
+                    const data = await response.json();
+
+                    // Show success info card
+                    document.getElementById('regSuccessEmail').textContent = data.user.email;
+                    document.getElementById('regSuccessPassword').textContent = data.temporary_password;
+                    document.getElementById('registrationSuccess').style.display = 'block';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
                     e.target.reset();
-                    showTab('dashboard');
                     loadStats();
                     if (typeof loadPatientsTable === 'function') loadPatientsTable();
                 } else {
                     const errorData = await response.json();
-                    let errorMsg = 'Registration failed: ';
+                    let errMsg = 'Registration failed:\n';
                     if (typeof errorData === 'object') {
-                        // Extract first error from the object (common for DRF 400 responses)
-                        const firstError = Object.values(errorData).flat()[0];
-                        errorMsg += firstError || JSON.stringify(errorData);
+                        for (const field in errorData) {
+                            errMsg += `- ${field}: ${Array.isArray(errorData[field]) ? errorData[field].join(', ') : errorData[field]}\n`;
+                        }
                     } else {
-                        errorMsg += 'Unknown error';
+                        errMsg += errorData;
                     }
-                    alert(errorMsg);
+                    alert(errMsg);
                 }
             } catch (err) {
                 alert('Connection error');
@@ -1241,7 +1285,23 @@
                 btn.textContent = 'Uploading to Blockchain...';
 
                 const formData = new FormData(e.target);
-                // No need to manually convert to JSON because we are uploading a file
+                const file = formData.get('document_file');
+                const fileError = document.getElementById('fileError');
+
+                // Client-side validation
+                if (file) {
+                    const max_size = 25 * 1024 * 1024;
+                    const valid_extensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif'];
+                    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+                    if (file.size > max_size || !valid_extensions.includes(ext)) {
+                        fileError.style.display = 'block';
+                        btn.disabled = false;
+                        btn.textContent = 'Blockchain Upload & Register';
+                        return;
+                    }
+                }
+                fileError.style.display = 'none';
 
                 try {
                     const response = await fetch(`${API_BASE}/blockchain/staff/upload-record/`, {
@@ -1495,10 +1555,10 @@
                             <span class="badge badge-active">${record.record_type.replace(/_/g, ' ')}</span>
                         </div>
                         <div style="font-size: 14px; color: var(--gray-600); line-height: 1.6;">
-                            <p><strong>📅 Date of Service:</strong> ${new Date(record.date_of_service).toLocaleDateString()}</p>
-                            ${record.description ? `<p><strong>📝 Notes:</strong> ${record.description}</p>` : ''}
-                            <p><strong>👨‍⚕️ Uploaded by:</strong> ${record.uploaded_by_name}</p>
-                            <p><strong>🔗 Blockchain Hash:</strong> <code style="background: #f1f5f9; padding: 2px 4px; border-radius: 4px;">${record.short_tx_hash}</code></p>
+                            <p><strong><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Date of Service:</strong> ${new Date(record.date_of_service).toLocaleDateString()}</p>
+                            ${record.description ? `<p><strong><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Notes:</strong> ${record.description}</p>` : ''}
+                            <p><strong><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Uploaded by:</strong> ${record.uploaded_by_name}</p>
+                            <p><strong><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Blockchain Hash:</strong> <code style="background: #f1f5f9; padding: 2px 4px; border-radius: 4px;">${record.short_tx_hash}</code></p>
                         </div>
                         <div style="margin-top: 16px;">
                             <button class="btn btn-primary" onclick="window.open('${record.file_url}', '_blank')">View File Attachment</button>

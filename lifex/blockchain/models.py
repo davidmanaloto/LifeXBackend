@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
+from .encryption import encryption_manager
 
 
 class MedicalRecord(models.Model):
@@ -74,6 +75,7 @@ class MedicalRecord(models.Model):
     # Status
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     is_verified = models.BooleanField(default=False)
+    is_encrypted = models.BooleanField(default=False, help_text="Whether sensitive fields are encrypted in DB")
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -98,10 +100,35 @@ class MedicalRecord(models.Model):
         return self.document_file.name.split('.')[-1].upper()
     
     def save(self, *args, **kwargs):
-        """Override save to calculate file size"""
+        """Override save to calculate file size and encrypt fields"""
         if self.document_file:
             self.file_size = self.document_file.size
+        
+        # Auto-encrypt on first save
+        if not self.is_encrypted:
+            self.encrypt_sensitive_fields()
+            self.is_encrypted = True
+            
         super().save(*args, **kwargs)
+
+    def encrypt_sensitive_fields(self):
+        """
+        Encrypts sensitive fields before saving to database.
+        Note: This is an example of how to use the encryption utility.
+        """
+        if self.description:
+            self.description = encryption_manager.encrypt(self.description)
+        if self.department:
+            self.department = encryption_manager.encrypt(self.department)
+        # We don't encrypt title usually to keep it searchable, but we could.
+        
+    def get_decrypted_description(self):
+        """Returns decrypted description"""
+        return encryption_manager.decrypt(self.description)
+
+    def get_decrypted_department(self):
+        """Returns decrypted department"""
+        return encryption_manager.decrypt(self.department)
 
 
 class BlockchainDocument(models.Model):
@@ -233,6 +260,7 @@ class AuditLog(models.Model):
     resource_id = models.CharField(max_length=50, blank=True)
     details = models.TextField(blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
+    is_encrypted = models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
     

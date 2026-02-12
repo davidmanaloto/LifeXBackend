@@ -60,6 +60,8 @@ class StaffProvisioningSerializer(serializers.ModelSerializer):
             password=temp_password,
             **validated_data
         )
+        user.encrypt_pii()
+        user.save()
         
         # Create invitation record
         StaffInvitation.objects.create(user=user)
@@ -86,18 +88,34 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
             'government_id_type', 'government_id_number',
             'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship'
         )
+        extra_kwargs = {
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+            'date_of_birth': {'required': True},
+            'gender': {'required': True},
+            'phone_number': {'required': True},
+            'address_line1': {'required': True},
+            'city': {'required': True},
+            'state_province': {'required': True},
+            'government_id_type': {'required': True},
+            'government_id_number': {'required': True},
+            'civil_status': {'required': True}
+        }
         
     def create(self, validated_data):
         password = validated_data.pop('password', None)
         validated_data['role'] = 'PATIENT'
         
         if not password:
-            password = User.objects.make_random_password()
+            password = 'Password123!'
             
         user = User.objects.create_user(
             password=password,
+            must_change_password=True,
             **validated_data
         )
+        user.encrypt_pii()
+        user.save()
         return user
 
 
@@ -141,10 +159,11 @@ class UserSerializer(serializers.ModelSerializer):
             'postal_code', 'country',
             'emergency_contact_name', 'emergency_contact_phone', 
             'emergency_contact_relationship',
+            'must_change_password',
             'date_joined', 'last_login'
         )
         read_only_fields = (
-            'id', 'role', 'is_active', 'date_joined', 'last_login'
+            'id', 'role', 'is_active', 'must_change_password', 'date_joined', 'last_login'
         )
     
     def get_full_name(self, obj):
@@ -152,6 +171,42 @@ class UserSerializer(serializers.ModelSerializer):
     
     def get_age(self, obj):
         return obj.age
+
+    def to_representation(self, instance):
+        """Mask sensitive fields for non-admin viewers who don't own the record"""
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        
+        if request and request.user.is_authenticated:
+            is_owner = request.user.id == instance.id
+            is_admin = request.user.role == 'ADMIN'
+            
+            if not (is_owner or is_admin):
+                # Mask Email: j***@example.com
+                email = data.get('email', '')
+                if email and '@' in email:
+                    name, domain = email.split('@')
+                    data['email'] = f"{name[0]}***@{domain}"
+                
+                # Mask Phone: *******1234
+                phone = data.get('phone_number', '')
+                if phone and len(phone) > 4:
+                    data['phone_number'] = f"{'*' * (len(phone)-4)}{phone[-4:]}"
+                
+                # Mask Gov ID
+                gov_id = data.get('government_id_number', '')
+                if gov_id and len(gov_id) > 2:
+                    data['government_id_number'] = f"{gov_id[:2]}{'*' * (len(gov_id)-2)}"
+            
+            # Decrypt fields for the owner or admin
+            if is_owner or is_admin:
+                data['phone_number'] = instance.decrypt_field('phone_number')
+                data['government_id_number'] = instance.decrypt_field('government_id_number')
+                data['address_line1'] = instance.decrypt_field('address_line1')
+                data['address_line2'] = instance.decrypt_field('address_line2')
+                data['emergency_contact_phone'] = instance.decrypt_field('emergency_contact_phone')
+                    
+        return data
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -170,9 +225,13 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         )
     
     def update(self, instance, validated_data):
-        """Update user instance"""
+        """Update user instance with encryption"""
         for field, value in validated_data.items():
             setattr(instance, field, value)
+        
+        # Reset encryption flag to re-encrypt new values
+        instance.is_encrypted = False
+        instance.encrypt_pii()
         instance.save()
         return instance
 
@@ -197,12 +256,44 @@ class ChangePasswordSerializer(serializers.Serializer):
     )
     
     def validate(self, attrs):
-        """Validate that new passwords match"""
+        """Validate that new passwords match and meet security standards"""
+        user = self.context['request'].user
+        
         if attrs['new_password'] != attrs['new_password2']:
             raise serializers.ValidationError(
                 {"new_password": "New password fields didn't match."}
             )
+            
+        # Run strict validation
+        try:
+            validate_password(attrs['new_password'], user)
+        except Exception as e:
+            raise serializers.ValidationError({"new_password": list(e.messages)})
+        
+        # Check password reuse
+        from django.contrib.auth.hashers import check_password
+        from .models import PasswordHistory
+        
+        # Check current password
+        if check_password(attrs['new_password'], user.password):
+            raise serializers.ValidationError({"new_password": "New password cannot be the same as your current password."})
+            
+        # Check history (last 3 passwords)
+        history = PasswordHistory.objects.filter(user=user).order_by('-created_at')[:3]
+        for past_pw in history:
+            if check_password(attrs['new_password'], past_pw.password_hash):
+                raise serializers.ValidationError({"new_password": "You have recently used this password. Please choose a different one."})
+
         return attrs
+
+    def validate_phone_number(self, value):
+        """Standardize and validate phone number format"""
+        import re
+        if value:
+            # Check for international format or local 10-11 digits
+            if not re.match(r'^\+?1?\d{9,15}$', value):
+                 raise serializers.ValidationError("Enter a valid phone number (e.g. +639123456789).")
+        return value
     
     def validate_old_password(self, value):
         """Validate old password"""

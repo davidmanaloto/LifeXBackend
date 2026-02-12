@@ -139,6 +139,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+    must_change_password = models.BooleanField(default=False)
+    
+    # Blind Indexes for searching encrypted fields
+    phone_number_hash = models.CharField(max_length=64, unique=True, null=True, blank=True)
+    government_id_hash = models.CharField(max_length=64, unique=True, null=True, blank=True)
+    
+    # Account Lockout
+    failed_login_attempts = models.IntegerField(default=0)
+    last_failed_login = models.DateTimeField(null=True, blank=True)
+    
+    # Encryption status
+    is_encrypted = models.BooleanField(default=False, help_text="Whether sensitive PII fields are encrypted in DB")
     
     # Timestamps
     date_joined = models.DateTimeField(default=timezone.now)
@@ -184,6 +196,42 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Return formatted full address"""
         parts = [self.address_line1, self.address_line2, self.city, self.state_province, self.postal_code, self.country]
         return ", ".join([p for p in parts if p])
+
+    def encrypt_pii(self):
+        """Encrypt sensitive PII fields before saving"""
+        from blockchain.encryption import encryption_manager
+        import hashlib
+        
+        # Don't re-encrypt if already encrypted
+        if not self.is_encrypted:
+            if self.phone_number:
+                # Generate blind index before encryption
+                self.phone_number_hash = hashlib.sha256(self.phone_number.strip().encode()).hexdigest()
+                self.phone_number = encryption_manager.encrypt(self.phone_number)
+            if self.government_id_number:
+                # Generate blind index before encryption
+                self.government_id_hash = hashlib.sha256(self.government_id_number.strip().encode()).hexdigest()
+                self.government_id_number = encryption_manager.encrypt(self.government_id_number)
+            if self.address_line1:
+                self.address_line1 = encryption_manager.encrypt(self.address_line1)
+            if self.address_line2:
+                self.address_line2 = encryption_manager.encrypt(self.address_line2)
+            if self.emergency_contact_phone:
+                self.emergency_contact_phone = encryption_manager.encrypt(self.emergency_contact_phone)
+            self.is_encrypted = True
+
+    def decrypt_field(self, field_name):
+        """Decrypt a specific field"""
+        from blockchain.encryption import encryption_manager
+        value = getattr(self, field_name)
+        if self.is_encrypted and value:
+            return encryption_manager.decrypt(value)
+        return value
+
+    def save(self, *args, **kwargs):
+        # We don't auto-encrypt in save() yet because it might break lookups
+        # Developers should call encrypt_pii() before save
+        super().save(*args, **kwargs)
 
 
 class DoctorSchedule(models.Model):
@@ -365,3 +413,17 @@ class StaffInvitation(models.Model):
 
     def __str__(self):
         return f"Invite for {self.user.email}"
+
+
+class PasswordHistory(models.Model):
+    """Stores hashed passwords to prevent reuse"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_history')
+    password_hash = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'Password Histories'
+
+    def __str__(self):
+        return f"Password history for {self.user.email} at {self.created_at}"

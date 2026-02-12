@@ -28,7 +28,7 @@ from .blockchain_service import BlockchainService
 from .utils import generate_document_id, hash_file
 
 
-def log_action(user, action, resource_type='', resource_id='', details='', request=None):
+def log_action(user, action, resource_type='', resource_id='', details='', request=None, is_encrypted=False):
     """Helper to create audit log"""
     ip_address = '0.0.0.0'
     if request:
@@ -44,7 +44,8 @@ def log_action(user, action, resource_type='', resource_id='', details='', reque
         resource_type=resource_type,
         resource_id=str(resource_id),
         details=details,
-        ip_address=ip_address
+        ip_address=ip_address,
+        is_encrypted=is_encrypted
     )
 
 
@@ -122,8 +123,8 @@ class UploadMedicalRecordView(APIView):
             # Get blockchain address
             blockchain_address = blockchain_service.get_account_for_user(patient.id)
             
-            # Create medical record
-            medical_record = MedicalRecord.objects.create(
+            # Create medical record - save via serializer to ensure encryption logic runs
+            medical_record = serializer.save(
                 patient=patient,
                 uploaded_by=request.user,
                 document_id=document_id,
@@ -133,8 +134,8 @@ class UploadMedicalRecordView(APIView):
                 block_number=tx_result['block_number'],
                 status='CONFIRMED',
                 is_verified=True,
-                registered_on_blockchain_at=timezone.now(),
-                **serializer.validated_data
+                is_encrypted=True,
+                registered_on_blockchain_at=timezone.now()
             )
             
             # Log blockchain transaction
@@ -153,8 +154,9 @@ class UploadMedicalRecordView(APIView):
                 action='UPLOAD_RECORD',
                 resource_type='MEDICAL_RECORD',
                 resource_id=medical_record.id,
-                details=f"Uploaded {medical_record.record_type} for patient {patient.email}",
-                request=request
+                details=f"Uploaded {medical_record.record_type} for patient {patient.email}. Status: ENCRYPTED",
+                request=request,
+                is_encrypted=True
             )
             
             return Response({
@@ -211,8 +213,9 @@ class MyMedicalRecordsView(generics.ListAPIView):
             user=self.request.user,
             action='VIEW_RECORDS',
             resource_type='MEDICAL_RECORD',
-            details='Viewed own medical records',
-            request=self.request
+            details='Viewed medical records (on-the-fly decryption)',
+            request=self.request,
+            is_encrypted=True
         )
         return MedicalRecord.objects.filter(patient=self.request.user)
 
@@ -305,6 +308,10 @@ class SystemStatsView(APIView):
             'medical_records': {
                 'total': MedicalRecord.objects.count(),
                 'confirmed': MedicalRecord.objects.filter(status='CONFIRMED').count(),
+                'encrypted': MedicalRecord.objects.filter(is_encrypted=True).count(),
+            },
+            'blockchain_transactions': {
+                'total': BlockchainTransaction.objects.count(),
             }
         }
 
@@ -370,7 +377,8 @@ class DownloadMedicalRecordView(APIView):
             resource_type='MEDICAL_RECORD',
             resource_id=record.id,
             details=f"Downloaded file: {record.document_file.name}",
-            request=request
+            request=request,
+            is_encrypted=True
         )
         
         # Serve file

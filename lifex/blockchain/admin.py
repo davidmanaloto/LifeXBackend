@@ -15,6 +15,7 @@ class MedicalRecordAdmin(admin.ModelAdmin):
         'uploaded_by',
         'status',
         'is_verified',
+        'is_encrypted',
         'created_at'
     )
     
@@ -153,6 +154,7 @@ class AuditLogAdmin(admin.ModelAdmin):
         'resource_type',
         'resource_id',
         'ip_address',
+        'is_encrypted',
         'created_at'
     )
     

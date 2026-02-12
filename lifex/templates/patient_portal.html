@@ -329,11 +329,26 @@
 
             <nav class="nav-items">
                 <div class="nav-item active" id="nav-records" onclick="showTab('records')">
-                    <span>📑</span>
+                    <span style="display:inline-flex;width:20px;height:20px;"><svg viewBox="0 0 24 24" width="20"
+                            height="20" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                        </svg></span>
                     <span>Medical Records</span>
                 </div>
                 <div class="nav-item" id="nav-appointments" onclick="showTab('appointments')">
-                    <span>📅</span>
+                    <span style="display:inline-flex;width:20px;height:20px;"><svg viewBox="0 0 24 24" width="20"
+                            height="20" stroke="currentColor" fill="none" stroke-width="1.75" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg></span>
                     <span>My Appointments</span>
                 </div>
             </nav>
@@ -352,6 +367,25 @@
 
         <!-- Main Content -->
         <main>
+            <!-- Security Alert (for default passwords) -->
+            <div id="securityAlert" class="card"
+                style="display: none; border-left: 6px solid var(--warning); background: #FFFBEB;">
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <div style="font-size: 24px;"><svg
+                            style="width:24px;height:24px;stroke:#D97706;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"
+                            viewBox="0 0 24 24">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg></div>
+                    <div style="flex: 1;">
+                        <h4 style="color: #92400E; margin-bottom: 4px;">Security Recommendation</h4>
+                        <p style="font-size: 14px; color: #B45309;">You are using a temporary or default password. For
+                            your protection, please update your password.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openSecurityModal()"
+                        style="background: #D97706; padding: 8px 16px; font-size: 13px;">Change Now</button>
+                </div>
+            </div>
+
             <!-- Records Section -->
             <section id="content-records" class="view-section active">
                 <header>
@@ -384,6 +418,40 @@
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- Security Modal -->
+    <div id="securityModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card" style="width: 100%; max-width: 400px; margin: 20px;">
+            <h2 style="margin-bottom: 20px;">Change Password</h2>
+            <form id="changePasswordForm">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Current
+                        Password</label>
+                    <input type="password" id="oldPassword" required
+                        style="width: 100%; padding: 10px; border: 1px solid var(--gray-200); border-radius: 8px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">New
+                        Password</label>
+                    <input type="password" id="newPassword" required
+                        style="width: 100%; padding: 10px; border: 1px solid var(--gray-200); border-radius: 8px;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Confirm New
+                        Password</label>
+                    <input type="password" id="newPassword2" required
+                        style="width: 100%; padding: 10px; border: 1px solid var(--gray-200); border-radius: 8px;">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" id="savePasswordBtn" class="btn btn-primary" style="flex:1">Update
+                        Password</button>
+                    <button type="button" class="btn" onclick="closeSecurityModal()"
+                        style="background: var(--gray-100);">Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <style>
@@ -421,10 +489,75 @@
                 window.location.href = '/login/';
                 return;
             }
+
+            // Check for default password alert
+            if (sessionStorage.getItem('must_change_password') === 'true') {
+                document.getElementById('securityAlert').style.display = 'block';
+            }
+
             loadPatientInfo();
             loadMedicalRecords();
             loadAppointments();
             document.getElementById('searchInput').addEventListener('input', searchRecords);
+        });
+
+        function openSecurityModal() {
+            document.getElementById('securityModal').style.display = 'flex';
+        }
+
+        function closeSecurityModal() {
+            document.getElementById('securityModal').style.display = 'none';
+        }
+
+        document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const old_password = document.getElementById('oldPassword').value;
+            const new_password = document.getElementById('newPassword').value;
+            const new_password2 = document.getElementById('newPassword2').value;
+            const btn = document.getElementById('savePasswordBtn');
+
+            if (new_password !== new_password2) {
+                alert("New passwords do not match.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/change-password/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ old_password, new_password, new_password2 })
+                });
+
+                if (response.ok) {
+                    alert('Password updated successfully!');
+                    sessionStorage.setItem('must_change_password', 'false');
+                    document.getElementById('securityAlert').style.display = 'none';
+                    closeSecurityModal();
+                    e.target.reset();
+                } else {
+                    const data = await response.json();
+                    let errMsg = 'Error changing password:\n';
+                    if (typeof data === 'object') {
+                        for (const field in data) {
+                            errMsg += `- ${Array.isArray(data[field]) ? data[field].join(', ') : data[field]}\n`;
+                        }
+                    } else {
+                        errMsg += data;
+                    }
+                    alert(errMsg);
+                }
+            } catch (err) {
+                alert('Connection error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Update Password';
+            }
         });
 
         function showTab(tabId) {
@@ -486,7 +619,7 @@
                         <div class="record-title">
                             <h3>${record.title}</h3>
                             <div class="blockchain-badge ${record.is_verified ? '' : 'unverified'}">
-                                ${record.is_verified ? '✓ Verified on Blockchain' : '⚠️ Verification Pending'}
+                                ${record.is_verified ? '<svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Verified on Blockchain' : '<svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Verification Pending'}
                             </div>
                         </div>
                         <span class="badge badge-primary">${record.record_type.replace(/_/g, ' ')}</span>
@@ -495,14 +628,14 @@
                     <div style="font-size: 14px; color: var(--gray-600); line-height: 1.6; margin-bottom: 20px;">
                         ${record.description ? `<p style="margin-bottom: 12px;">${record.description}</p>` : ''}
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; background: var(--gray-50); padding: 16px; border-radius: 8px;">
-                            <div><strong>📅 Date:</strong> ${new Date(record.date_of_service).toLocaleDateString()}</div>
-                            <div><strong>👨‍⚕️ Provider:</strong> ${record.uploaded_by_name}</div>
-                            <div style="grid-column: 1/-1;"><strong>🔗 Hash:</strong> <code style="font-family: monospace; font-size: 12px;">${record.tx_hash}</code></div>
+                            <div><strong><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Date:</strong> ${new Date(record.date_of_service).toLocaleDateString()}</div>
+                            <div><strong><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Provider:</strong> ${record.uploaded_by_name}</div>
+                            <div style="grid-column: 1/-1;"><strong><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Hash:</strong> <code style="font-family: monospace; font-size: 12px;">${record.short_tx_hash}</code></div>
                         </div>
                     </div>
                     
                     <button class="btn btn-primary" onclick="window.open('${record.file_url}', '_blank')">
-                        <span>📥</span> Download Record
+                        <svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download Record
                     </button>
                 </div>
             `).join('');
@@ -525,9 +658,9 @@
                         <span class="badge badge-primary">${app.appointment_type.replace(/_/g, ' ')}</span>
                     </div>
                     <div style="font-size: 14px; color: var(--gray-600); line-height: 1.6;">
-                        <p><strong>📅 Date:</strong> ${app.appointment_date}</p>
-                        <p><strong>🕒 Time:</strong> ${app.appointment_time}</p>
-                        ${app.reason ? `<p style="margin-top: 8px;"><strong>📝 Reason:</strong> ${app.reason}</p>` : ''}
+                        <p><strong><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Date:</strong> ${app.appointment_date}</p>
+                        <p><strong><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Time:</strong> ${app.appointment_time}</p>
+                        ${app.reason ? `<p style="margin-top: 8px;"><strong><svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:4px;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Reason:</strong> ${app.reason}</p>` : ''}
                     </div>
                 </div>
             `).join('');

@@ -153,7 +153,11 @@ class PatientRegistrationView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         
+        # Determine what password was used to show to receptionist
+        password_used = request.data.get('password') or 'Password123!'
+        
         return Response({
             'message': 'Patient registered successfully',
-            'user': UserSerializer(user).data
+            'user': UserSerializer(user).data,
+            'temporary_password': password_used
         }, status=status.HTTP_201_CREATED)

@@ -62,13 +62,38 @@ class MedicalRecordUploadSerializer(serializers.ModelSerializer):
             )
     
     def validate_document_file(self, value):
-        """Validate file size (max 25MB)"""
+        """Validate file size (max 25MB) and format"""
+        # Validate Size
         max_size = 25 * 1024 * 1024  # 25MB in bytes
         if value.size > max_size:
             raise serializers.ValidationError(
                 f"File size cannot exceed 25MB. Current size: {value.size / (1024*1024):.2f}MB"
             )
+            
+        # Validate Format
+        valid_extensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif']
+        import os
+        ext = os.path.splitext(value.name)[1].lower()
+        if ext not in valid_extensions:
+            raise serializers.ValidationError(
+                f"Unsupported file format. Allowed formats: {', '.join(valid_extensions)}"
+            )
+            
         return value
+
+    def create(self, validated_data):
+        """Encrypt fields before creating the record"""
+        from .encryption import encryption_manager
+        
+        description = validated_data.get('description')
+        department = validated_data.get('department')
+        
+        if description:
+            validated_data['description'] = encryption_manager.encrypt(description)
+        if department:
+            validated_data['department'] = encryption_manager.encrypt(department)
+            
+        return super().create(validated_data)
 
 
 class MedicalRecordSerializer(serializers.ModelSerializer):
@@ -109,6 +134,15 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
             'created_at',
             'registered_on_blockchain_at'
         )
+
+    def to_representation(self, instance):
+        """Decrypt fields before returning them"""
+        ret = super().to_representation(instance)
+        if instance.description:
+            ret['description'] = instance.get_decrypted_description() or instance.description
+        if instance.department:
+            ret['department'] = instance.get_decrypted_department() or instance.department
+        return ret
     
     def get_uploaded_by_name(self, obj):
         if obj.uploaded_by:
@@ -157,5 +191,6 @@ class AuditLogSerializer(serializers.ModelSerializer):
             'resource_id',
             'details',
             'ip_address',
+            'is_encrypted',
             'created_at'
         )
